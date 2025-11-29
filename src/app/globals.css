@@ -147,6 +147,16 @@
 
 /* Animation utilities */
 @layer utilities {
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.5s ease forwards;
   }

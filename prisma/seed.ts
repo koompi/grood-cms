@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import * as bcrypt from "bcryptjs";
 
-const dbPath = process.env.DATABASE_URL?.replace("file:", "") || "./dev.db";
+const dbPath = process.env.DATABASE_URL?.replace("file:", "") || "./prisma/dev.db";
 const adapter = new PrismaBetterSqlite3({ url: dbPath });
 const prisma = new PrismaClient({ adapter });
 

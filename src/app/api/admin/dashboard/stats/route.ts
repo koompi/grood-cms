@@ -23,6 +23,15 @@ export async function GET() {
       newInquiriesCount,
       recentPosts,
       recentInquiries,
+      // Grood-specific stats
+      ebikesCount,
+      publishedEbikesCount,
+      accessoriesCount,
+      publishedAccessoriesCount,
+      storesCount,
+      activeStoresCount,
+      testimonialsCount,
+      faqsCount,
     ] = await Promise.all([
       prisma.post.count({ where: orgFilter }),
       prisma.post.count({ where: { ...orgFilter, status: "PUBLISHED" } }),
@@ -57,6 +66,15 @@ export async function GET() {
           createdAt: true,
         },
       }),
+      // Grood-specific queries
+      prisma.eBike.count({ where: orgFilter }),
+      prisma.eBike.count({ where: { ...orgFilter, status: "PUBLISHED" } }),
+      prisma.accessory.count({ where: orgFilter }),
+      prisma.accessory.count({ where: { ...orgFilter, status: "PUBLISHED" } }),
+      prisma.store.count({ where: orgFilter }),
+      prisma.store.count({ where: { ...orgFilter, status: "ACTIVE" } }),
+      prisma.groodTestimonial.count({ where: orgFilter }),
+      prisma.fAQ.count({ where: orgFilter }),
     ]);
 
     const stats = {
@@ -75,6 +93,23 @@ export async function GET() {
       },
       recentPosts,
       recentInquiries,
+      // Grood-specific stats
+      grood: {
+        ebikes: {
+          total: ebikesCount,
+          published: publishedEbikesCount,
+        },
+        accessories: {
+          total: accessoriesCount,
+          published: publishedAccessoriesCount,
+        },
+        stores: {
+          total: storesCount,
+          active: activeStoresCount,
+        },
+        testimonials: testimonialsCount,
+        faqs: faqsCount,
+      },
     };
 
     return NextResponse.json(stats);

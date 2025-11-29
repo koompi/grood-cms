@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Roboto, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/modules/core/providers/session-provider";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -33,11 +31,7 @@ export default function RootLayout({
         className={`${roboto.variable} ${robotoCondensed.variable} antialiased`}
       >
         <Providers>
-          <div className="flex flex-col min-h-screen">
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-          </div>
+          {children}
         </Providers>
       </body>
     </html>

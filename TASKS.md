@@ -1,4 +1,10 @@
-# SmallWorld CMS - Implementation Tasks
+# Grood CMS - Implementation Tasks
+
+## Project Overview
+
+Transform the Grood e-bike website into a fully dynamic CMS where admin users can manage all content, pages, products, media, and site settings through an intuitive dashboard matching the Grood brand aesthetic.
+
+---
 
 ## ✅ PHASE 0: FOUNDATION COMPLETE (19/19 Tasks)
 
@@ -16,471 +22,590 @@ Core CMS features implemented:
 
 ---
 
-## 🚀 PHASE 1: Foundation & Architecture
+## ✅ PHASE 1: Foundation & Architecture (COMPLETE)
 
 ### ✅ Task 1.1: Change Auth System
 
 **Status**: Complete
-**Priority**: High
 
-Replace current NextAuth credentials with Koompi OAuth as primary auth:
-
-- [x] Configure Koompi OAuth provider (`src/modules/core/providers/koompi-provider.ts`)
-- [x] Update auth callbacks to handle Koompi user data
-- [x] Add account linking for existing users
-- [x] Update login page UI for Koompi OAuth flow
-- [x] Handle user profile sync from Koompi
-- [x] Create auth error page (`src/app/auth/error/page.tsx`)
-- [x] Create `.env.example` with documented variables
-
-**Reference**: https://github.com/koompi/koompi-oauth-nodejs-starter
+- [x] Koompi OAuth provider configured
+- [x] Auth callbacks for Koompi user data
+- [x] Account linking, error pages, env setup
 
 ### ✅ Task 1.2: User Roles (RBAC)
 
 **Status**: Complete
-**Priority**: High
 
-Implement granular role-based access control:
-
-- [x] Define permission matrix (view, create, edit, delete, publish per resource)
-- [x] Create `Permission` and `RolePermission` models in Prisma
-- [x] Build `src/lib/permissions.ts` middleware for API routes
-- [x] Add permission checks to all admin API routes
-- [x] Create role management UI (`src/app/admin/roles/page.tsx`)
-- [x] Add permission-based UI components (`src/lib/permissions-client.tsx`)
-
-**Roles**: SUPER_ADMIN, ADMIN, EDITOR, AUTHOR, USER
-
-**Files Created/Modified**:
-
-- `prisma/schema.prisma` - Added Permission, RolePermission models, updated Role enum
-- `src/lib/permissions.ts` - Full RBAC middleware with permission matrix
-- `src/lib/permissions-client.tsx` - React hooks and components (usePermissions, PermissionGate)
-- `src/app/api/admin/roles/route.ts` - Roles API endpoint
-- `src/app/admin/roles/page.tsx` - Role management UI
-- All admin API routes updated with `withPermission`:
-  - `posts/route.ts`, `users/route.ts`, `pages/route.ts`, `products/route.ts`
-  - `media/route.ts`, `menus/route.ts`, `categories/route.ts`, `tags/route.ts`
-  - `settings/route.ts`, `inquiries/route.ts`, `dashboard/stats/route.ts`
+- [x] Permission matrix implemented
+- [x] Role management UI
+- [x] Permission-based API routes
 
 ### ✅ Task 1.3: Multi-tenant Support
 
 **Status**: Complete
-**Priority**: High
 
-Complete multi-tenant isolation:
-
-- [x] Add organization selection/creation on signup
-- [x] Create organization settings page
-- [x] Implement organization invitation system
-- [x] Add organization switcher for users with multiple orgs
-- [x] Ensure all queries filter by `organizationId`
-- [x] Add organization-level settings override
-
-**Files Created/Modified**:
-
-- `prisma/schema.prisma` - Added OrganizationMembership, OrganizationInvitation models
-- `src/app/api/admin/organizations/route.ts` - List/create organizations
-- `src/app/api/admin/organizations/[id]/route.ts` - Single org CRUD
-- `src/app/api/admin/organizations/switch/route.ts` - Switch active org
-- `src/app/api/admin/organizations/invitations/route.ts` - Invitation management
-- `src/app/api/auth/invite/[token]/route.ts` - Accept invitation
-- `src/app/auth/invite/[token]/page.tsx` - Invitation acceptance UI
-- `src/app/admin/organizations/page.tsx` - Organization settings UI
-- `src/components/organization-switcher.tsx` - Org switcher dropdown
-- `src/app/admin/dashboard/layout.tsx` - Added org switcher to header
-- `src/modules/core/auth.ts` - Updated to create memberships on signup
+- [x] Organization membership system
+- [x] Organization switcher
+- [x] All queries filter by organizationId
 
 ---
 
-## 📝 PHASE 2: Content & Asset Experience
+## 🚀 PHASE 7: GROOD CMS DYNAMIC CONTENT (NEW)
 
-### ✅ Task 2.1: Advanced Block Editor
+### Purpose
 
-**Status**: Complete
-**Priority**: Medium
+Make all Grood frontend pages dynamically editable from the admin dashboard with page templates and block-based editing.
 
-Extend Tiptap with custom SmallWorld blocks:
+---
 
-- [x] Hero block (image, title, subtitle, CTA buttons)
-- [x] Product grid block (select products to display)
-- [x] Testimonial block (quote, author, image)
-- [x] Gallery block (image grid with lightbox)
-- [x] Video embed block (YouTube, Vimeo)
-- [x] Call-to-action block
-- [x] Create block picker UI
-- [x] Updated RichEditor with enableBlocks option
+### ✅ Task 7.1: Database Schema for Grood Content
 
-**Files Created**:
+**Status**: COMPLETE ✅
+**Priority**: P0 - CRITICAL
 
-- `src/components/editor/blocks/types.ts` - Block type definitions
-- `src/components/editor/blocks/HeroBlock.tsx` - Hero section with image, CTA
-- `src/components/editor/blocks/ProductGridBlock.tsx` - Product grid with selection
-- `src/components/editor/blocks/TestimonialBlock.tsx` - Customer testimonial
-- `src/components/editor/blocks/GalleryBlock.tsx` - Image gallery with lightbox
-- `src/components/editor/blocks/VideoEmbedBlock.tsx` - YouTube/Vimeo embed
-- `src/components/editor/blocks/CallToActionBlock.tsx` - CTA section
-- `src/components/editor/blocks/index.ts` - Block exports
-- `src/components/editor/BlockPicker.tsx` - Block selection UI
-- `src/components/ui/checkbox.tsx` - Checkbox component
+New models for Grood-specific content:
 
-### ✅ Task 2.2: Media Library 2.0
+- [x] `EBike` model - E-bike products with full specs
+- [x] `Accessory` model - Accessories with categories
+- [x] `Store` model - Store locations
+- [x] `GroodTestimonial` model - Press quotes & reviews
+- [x] `GroodFAQ` model - FAQs by category
+- [x] `PageTemplate` model - Available templates
+- [x] `GroodPage` model - Content blocks per page
+- [x] `GroodSiteSetting` model - Grood-specific settings
+- [x] Database seeded with static content
 
-**Status**: Complete
-**Priority**: Medium
+**Database Changes**:
 
-Enhanced media management:
+```prisma
+model EBike {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  tagline       String?
+  description   Json?    // Tiptap JSON
+  price         Float
+  originalPrice Float?
+  heroImage     String?
+  galleryImages Json?    // Array of image URLs
+  colors        Json?    // [{name, hex, image}]
+  specs         Json?    // {range, speed, weight, battery, motor, etc}
+  features      Json?    // [{icon, title, description}]
+  badge         String?  // "Best Seller", "New", etc
+  status        String   @default("DRAFT")
+  order         Int      @default(0)
+  organizationId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
 
-- [x] Add folder support with nested structure (MediaFolder model)
-- [x] Implement drag-drop folder organization (files and UI)
-- [x] Bulk upload with progress indicator
-- [x] Move media between folders (bulk operations)
-- [x] Search and filter by type, date, folder
-- [x] Grid/list view toggle
-- [x] Selection mode with bulk actions
-- [ ] Add basic image editor (crop, resize, rotate) - deferred to future
-- [ ] Add image optimization on upload - deferred to future
-- [ ] Media usage tracking (where is this file used?) - deferred to future
+model Accessory {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   Json?
+  price         Float
+  originalPrice Float?
+  image         String?
+  category      String   // safety, bags, comfort, tech, maintenance
+  badge         String?
+  rating        Float?
+  reviewCount   Int      @default(0)
+  status        String   @default("DRAFT")
+  organizationId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
 
-**Files Created/Modified**:
+model Store {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // "Brand Store", "Service Point"
+  address     String
+  city        String
+  country     String
+  phone       String?
+  email       String?
+  hours       String?
+  services    Json?    // Array of service names
+  image       String?
+  lat         Float?
+  lng         Float?
+  status      String   @default("ACTIVE")
+  organizationId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
-- `prisma/schema.prisma` - Added MediaFolder model, updated Media model with folderId, originalName, updatedAt
-- `src/app/api/admin/media/route.ts` - Updated with folder filtering, bulk upload, PATCH for bulk operations
-- `src/app/api/admin/media/[id]/route.ts` - Updated with folder support, permission checks
-- `src/app/api/admin/media/folders/route.ts` - Folder list/create API
-- `src/app/api/admin/media/folders/[id]/route.ts` - Folder CRUD with breadcrumbs
-- `src/app/admin/media/page.tsx` - Complete rewrite with folders, drag-drop, bulk ops, grid/list view
+model Testimonial {
+  id        String   @id @default(cuid())
+  quote     String
+  source    String   // "Tech Review Asia"
+  author    String?
+  rating    Int?
+  type      String   @default("press") // press, customer
+  featured  Boolean  @default(false)
+  organizationId String
+  createdAt DateTime @default(now())
+}
 
-### ✅ Task 2.3: Revision History
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String   // general, shipping, warranty, etc
+  order     Int      @default(0)
+  organizationId String
+  createdAt DateTime @default(now())
+}
 
-**Status**: Complete
-**Priority**: Medium
+model PageTemplate {
+  id          String   @id @default(cuid())
+  name        String   // "Homepage", "Product Listing", "Landing Page"
+  slug        String   @unique
+  description String?
+  thumbnail   String?
+  blocks      Json     // Default block structure
+  createdAt   DateTime @default(now())
+}
 
-Content versioning system:
+model GroodPage {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String
+  templateId  String?
+  blocks      Json     // Array of block configs
+  seoTitle    String?
+  seoDesc     String?
+  ogImage     String?
+  status      String   @default("DRAFT")
+  organizationId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-- [x] Create `Revision` model in Prisma
-- [x] Auto-save revisions on content update
-- [x] Revision list UI with diff viewer
-- [x] Restore previous revision functionality
-- [x] Limit revision count per content (configurable via cleanupOldRevisions)
+  @@unique([slug, organizationId])
+}
+```
 
-**Files Created/Modified**:
+---
 
-- `prisma/schema.prisma` - Added Revision model with version, contentType, contentId, changes JSON
-- `src/modules/content/services/revision.ts` - Full revision service (create, get, compare, restore, cleanup)
-- `src/app/api/admin/revisions/route.ts` - List revisions for content
-- `src/app/api/admin/revisions/[id]/route.ts` - Get revision, restore revision (POST)
-- `src/app/api/admin/posts/[id]/route.ts` - New file with revision creation on PUT
-- `src/app/api/admin/pages/[id]/route.ts` - Updated with revision creation on PUT
-- `src/app/api/admin/products/[id]/route.ts` - Updated with revision creation on PUT
-- `src/components/content/RevisionHistory.tsx` - Reusable revision history sheet/dialog
-- `src/app/admin/content/posts/[id]/page.tsx` - New edit page with RevisionHistory
-- `src/app/admin/content/pages/[id]/page.tsx` - Added RevisionHistory component
-- `src/app/admin/content/products/[id]/page.tsx` - Added RevisionHistory component
+### ✅ Task 7.2: Admin Dashboard UI Redesign
 
-### ✅ Task 2.4: Content Scheduling
+**Status**: COMPLETE ✅
+**Priority**: P0 - CRITICAL
 
-**Status**: Complete
-**Priority**: Medium
+Redesign admin to match Grood brand:
 
-Schedule content publishing:
+- [x] Update color scheme (Gold #fdc501, Dark #303030)
+- [x] Redesign sidebar with Grood sections
+- [x] Dashboard stats with Grood counts
+- [x] Navigation reorganized for Grood content
 
-- [x] Add `scheduledAt` field to Post, Page, Product
-- [x] Add SCHEDULED status to PostStatus, PageStatus, ProductStatus enums
-- [x] Create scheduling UI (date/time picker dialog)
-- [x] Implement cron endpoint for publishing scheduled content
-- [x] Show scheduled content in admin with countdown
-- [ ] Email notification on publish (deferred - requires email service)
+---
 
-**Files Created/Modified**:
+### ✅ Task 7.3: E-Bike Management
 
-- `prisma/schema.prisma` - Added scheduledAt field and SCHEDULED enum values
-- `src/modules/content/services/scheduling.ts` - Full scheduling service
-- `src/app/api/admin/scheduling/route.ts` - Schedule/unschedule API
-- `src/app/api/cron/publish/route.ts` - Cron endpoint for auto-publishing
-- `src/components/content/ScheduleDialog.tsx` - Scheduling UI dialog
-- `src/app/admin/content/posts/[id]/page.tsx` - Added scheduling UI
-- `src/app/admin/content/pages/[id]/page.tsx` - Added scheduling UI
+**Status**: COMPLETE ✅
+**Priority**: P1 - HIGH
 
-### ✅ Task 2.5: Preview Mode
+Full e-bike product management:
 
-**Status**: Complete
-**Priority**: Low
+- [x] E-bike list page with grid/table view
+- [x] E-bike create/edit form
+- [x] Specs editor (range, speed, weight, etc.)
+- [x] Color variants with image per color
+- [x] Gallery management
+- [x] Features editor (icon + title + desc)
+- [x] Status & ordering
 
-Device simulation preview:
+**Admin Pages**:
 
-- [x] Create preview API route with draft token
-- [x] Add preview button in content editor
-- [x] Device frame simulation (mobile, tablet, desktop)
-- [x] Share preview link with expiration
+- `/admin/ebikes` - List all e-bikes ✅
+- `/admin/ebikes/new` - Create e-bike ✅
+- `/admin/ebikes/[id]` - Edit e-bike ✅
 
-**Files Created/Modified**:
+**API Routes**:
 
-- `src/app/api/preview/route.ts` - Preview token generation, validation, exit
-- `src/components/preview/PreviewToolbar.tsx` - Device frame simulation toolbar
-- `src/components/preview/PreviewButton.tsx` - Preview button with share dialog
-- `src/app/admin/content/posts/[id]/page.tsx` - Added PreviewButton
-- `src/app/admin/content/pages/[id]/page.tsx` - Added PreviewButton
-- `src/app/admin/content/products/[id]/page.tsx` - Added PreviewButton
+- `GET/POST /api/admin/ebikes` ✅
+- `GET/PUT/DELETE /api/admin/ebikes/[id]` ✅
 
-### ⬜ Task 2.6: Advanced SEO & Social Preview
+---
 
-**Status**: Not Started
-**Priority**: Medium
+### ✅ Task 7.4: Accessories Management
 
-Enhanced SEO tooling:
+**Status**: COMPLETE ✅
+**Priority**: P1 - HIGH
 
-- [ ] Google SERP preview
-- [ ] Facebook/Twitter card preview
-- [ ] Open Graph image generator
-- [ ] SEO score/checklist (title length, meta desc, etc.)
-- [ ] Canonical URL management
-- [ ] Structured data (JSON-LD) editor
+Accessory product management:
+
+- [x] Accessories list with category filter
+- [x] Accessory create/edit form
+- [x] Category selection (Safety, Bags, Comfort, Tech, Maintenance)
+- [x] Pricing, badges, ratings
+
+**Admin Pages**:
+
+- `/admin/accessories` - List ✅
+- `/admin/accessories/new` - Create ✅
+- `/admin/accessories/[id]` - Edit ✅
+
+**API Routes**:
+
+- `GET/POST /api/admin/accessories` ✅
+- `GET/PUT/DELETE /api/admin/accessories/[id]` ✅
+
+---
+
+### ✅ Task 7.5: Store Locations Management
+
+**Status**: COMPLETE ✅
+**Priority**: P1 - HIGH
+
+Store/location management:
+
+- [x] Store list with type filter (Brand Store / Service Point)
+- [x] Store create/edit form
+- [x] Hours & services editor
+- [x] Lat/Lng coordinates for map
+
+**Admin Pages**:
+
+- `/admin/stores` - List ✅
+- `/admin/stores/new` - Create ✅
+- `/admin/stores/[id]` - Edit ✅
+
+**API Routes**:
+
+- `GET/POST /api/admin/stores` ✅
+- `GET/PUT/DELETE /api/admin/stores/[id]` ✅
+
+---
+
+### ✅ Task 7.6: Testimonials & FAQ Management
+
+**Status**: COMPLETE ✅
+**Priority**: P2 - MEDIUM
+
+Manage testimonials and FAQs:
+
+- [x] Testimonials list with type filter (Text/Video)
+- [x] Testimonial create/edit with rating, avatar, bike model
+- [x] FAQ list with category grouping
+- [x] FAQ create/edit with ordering
+
+**Admin Pages**:
+
+- `/admin/testimonials` - List ✅
+- `/admin/testimonials/new` - Create ✅
+- `/admin/testimonials/[id]` - Edit ✅
+- `/admin/faqs` - List with categories ✅
+- `/admin/faqs/new` - Create ✅
+- `/admin/faqs/[id]` - Edit ✅
+
+**API Routes**:
+
+- `GET/POST /api/admin/testimonials` ✅
+- `GET/PUT/DELETE /api/admin/testimonials/[id]` ✅
+- `GET/POST /api/admin/faqs` ✅
+- `GET/PUT/DELETE /api/admin/faqs/[id]` ✅
+
+---
+
+### ✅ Task 7.7: Page Templates System
+
+**Status**: COMPLETE ✅
+**Priority**: P1 - HIGH
+
+Page template system:
+
+- [x] Define template types:
+  - Homepage Template
+  - Product Listing Template
+  - Product Detail Template
+  - Landing Page Template
+  - Blog Template
+  - Contact Template
+  - Store Locator Template
+- [x] Template selector when creating pages
+- [x] Template preview thumbnails
+
+**Admin Pages**:
+
+- `/admin/page-templates` - List all templates ✅
+- `/admin/page-templates/new` - Create template ✅
+- `/admin/page-templates/[id]` - Edit template ✅
+
+**API Routes**:
+
+- `GET/POST /api/admin/page-templates` ✅
+- `GET/PUT/DELETE /api/admin/page-templates/[id]` ✅
+
+---
+
+### ✅ Task 7.8: Block-Based Page Editor
+
+**Status**: COMPLETE ✅
+**Priority**: P1 - HIGH
+
+Visual page builder:
+
+- [x] Block picker UI (existing, enhanced)
+- [x] Drag-drop block reordering
+- [x] Block configuration panels
+- [x] Live preview mode
+
+**Admin Pages**:
+
+- `/admin/grood-pages` - List all pages ✅
+- `/admin/grood-pages/new` - Create page ✅
+- `/admin/grood-pages/[id]` - Block editor ✅
+- `/admin/grood-pages/[id]/preview` - Preview page ✅
+
+**API Routes**:
+
+- `GET/POST /api/admin/grood-pages` ✅
+- `GET/PUT/DELETE /api/admin/grood-pages/[id]` ✅
+
+**Public Rendering**:
+
+- `/p/[slug]` - Dynamic page rendering with blocks ✅
+
+**Block Types for Grood**:
+| Block | Editable Fields |
+|-------|-----------------|
+| Hero | Title, subtitle, CTAs, background, overlay |
+| Product Grid | Title, columns, product selection |
+| Testimonial | Quote, author, rating, avatar |
+| Gallery | Images, columns, gap size |
+| Video Embed | URL, aspect ratio, caption |
+| Call to Action | Title, description, buttons, colors |
+
+---
+
+### ✅ Task 7.9: Dynamic Frontend Rendering
+
+**Status**: COMPLETE ✅
+**Priority**: P1 - HIGH
+
+Connect frontend to CMS:
+
+- [x] Homepage from CMS (e-bikes, testimonials, FAQs)
+- [x] Our Rides from EBike model
+- [x] Product detail from EBike
+- [x] Accessories from Accessory model
+- [x] Find Store from Store model
+- [x] Contact/FAQ from FAQ model
+- [x] Blog already done (verified)
+- [x] Dynamic navigation from menus
+
+**Files Updated**:
+
+- `src/app/(grood)/page.tsx` - Dynamic homepage with e-bikes, testimonials ✅
+- `src/app/(grood)/our-rides/page.tsx` - From DB ✅
+- `src/app/(grood)/our-rides/[slug]/page.tsx` - From DB ✅
+- `src/app/(grood)/accessories/page.tsx` - From DB ✅
+- `src/app/(grood)/find-store/page.tsx` - From DB ✅
+- `src/app/(grood)/contact/page.tsx` - FAQs from DB ✅
+
+**Public API Routes**:
+
+- `GET /api/ebikes` - Active e-bikes ✅
+- `GET /api/ebikes/[slug]` - Single e-bike ✅
+- `GET /api/accessories` - Active accessories with category filter ✅
+- `GET /api/stores` - Active stores with type/city filter ✅
+- `GET /api/testimonials` - Testimonials with type/featured filter ✅
+- `GET /api/faqs` - FAQs with category filter ✅
+
+---
+
+### ✅ Task 7.10: Site Settings for Grood
+
+**Status**: COMPLETE ✅
+**Priority**: P2 - MEDIUM
+
+Global site configuration:
+
+- [x] Logo upload
+- [x] Contact info (address, phone, email)
+- [x] Social media links
+- [x] Footer content
+- [x] SEO defaults
+- [x] Homepage settings
+
+**Admin Page**:
+
+- `/admin/settings` - Full settings dashboard ✅
+
+---
+
+### ✅ Task 7.11: Navigation Management
+
+**Status**: COMPLETE ✅
+**Priority**: P2 - MEDIUM
+
+Dynamic menu management:
+
+- [x] Header menu editor
+- [x] Footer menu editor
+- [x] Sidebar menu config
+- [x] Menu item ordering
+- [x] External link support
+
+**Admin Page**:
+
+- `/admin/menus` - Menu builder with drag-drop ✅
+
+**API Routes**:
+
+- `GET/POST /api/admin/menus` ✅
+- `GET/PUT/DELETE /api/admin/menus/[id]` ✅
+
+---
+
+## 📊 PHASE 7 Implementation Order
+
+```
+Day 1-2: Task 7.1 - Database Schema
+├── Create migrations
+├── Seed with current static data
+└── Generate Prisma client
+
+Day 3-4: Task 7.2 - Admin Dashboard UI
+├── Redesign layout & sidebar
+├── Dashboard home page
+└── Theme components
+
+Day 5-6: Task 7.3 - E-Bike Management
+├── CRUD API routes
+├── List page
+└── Create/Edit forms
+
+Day 7: Task 7.4 - Accessories Management
+├── CRUD API routes
+└── Admin pages
+
+Day 8: Task 7.5 - Store Management
+├── CRUD API routes
+└── Admin pages
+
+Day 9: Task 7.6 - Testimonials & FAQs
+├── CRUD API routes
+└── Admin pages
+
+Day 10: Task 7.7 & 7.8 - Page Templates & Editor
+├── Template definitions
+├── Block editor enhancements
+└── Page builder UI
+
+Day 11-12: Task 7.9 - Dynamic Frontend
+├── Update all Grood pages
+├── Connect to database
+└── Dynamic rendering
+
+Day 13: Task 7.10 & 7.11 - Settings & Navigation
+├── Site settings page
+└── Menu management
+
+Day 14: Testing & Polish
+├── End-to-end testing
+├── Bug fixes
+└── Performance optimization
+```
+
+---
+
+## 📝 PHASE 2: Content & Asset Experience (Existing)
+
+### ✅ Task 2.1: Advanced Block Editor - Complete
+
+### ✅ Task 2.2: Media Library 2.0 - Complete
+
+### ✅ Task 2.3: Revision History - Complete
+
+### ✅ Task 2.4: Content Scheduling - Complete
+
+### ✅ Task 2.5: Preview Mode - Complete
+
+### ⬜ Task 2.6: Advanced SEO & Social Preview - Not Started
 
 ---
 
 ## ⚙️ PHASE 3: Workflow & Developer API
 
-### ⬜ Task 3.1: Approval Workflows
+### ⬜ Task 3.1: Approval Workflows - Not Started
 
-**Status**: Not Started
-**Priority**: High
+### ⬜ Task 3.2: API Token Management - Not Started
 
-Content approval system:
+### ⬜ Task 3.3: Webhooks System - Not Started
 
-- [ ] Add `PENDING_REVIEW` status to content models
-- [ ] Create workflow configuration per content type
-- [ ] Assign reviewers/approvers
-- [ ] Email notifications for review requests
-- [ ] Approval/rejection with comments
-- [ ] Audit log for workflow actions
-
-### ⬜ Task 3.2: API Token Management
-
-**Status**: Not Started
-**Priority**: Medium
-
-Developer API access:
-
-- [ ] Create `ApiToken` model with scopes
-- [ ] Token generation UI in admin settings
-- [ ] Token authentication middleware
-- [ ] Rate limiting per token
-- [ ] Usage analytics per token
-
-### ⬜ Task 3.3: Webhooks System
-
-**Status**: Not Started
-**Priority**: Medium
-
-Event-driven integrations:
-
-- [ ] Create `Webhook` model (URL, events, secret)
-- [ ] Webhook management UI
-- [ ] Trigger webhooks on content events (create, update, delete, publish)
-- [ ] Webhook delivery logs with retry
-- [ ] Signature verification for security
-
-### ⬜ Task 3.4: API Documentation
-
-**Status**: Not Started
-**Priority**: Low
-
-Developer documentation:
-
-- [ ] Generate OpenAPI/Swagger spec
-- [ ] Create `/api/docs` page with Swagger UI
-- [ ] Document all public API endpoints
-- [ ] Add code examples (cURL, JS, Python)
+### ⬜ Task 3.4: API Documentation - Not Started
 
 ---
 
 ## 📣 PHASE 4: Marketing & Engagement
 
-### ⬜ Task 4.1: Form Builder
+### ⬜ Task 4.1: Form Builder - Not Started
 
-**Status**: Not Started
-**Priority**: Medium
+### ⬜ Task 4.2: Search Functionality - Not Started
 
-Dynamic form creation:
+### ⬜ Task 4.3: Analytics Integration - Not Started
 
-- [ ] Create `Form` and `FormField` models
-- [ ] Drag-drop form builder UI
-- [ ] Field types: text, email, phone, select, checkbox, file
-- [ ] Form embed via shortcode or block
-- [ ] Form submissions management
-- [ ] Export submissions to CSV
-
-### ⬜ Task 4.2: Search Functionality
-
-**Status**: Not Started
-**Priority**: High
-
-Site-wide search:
-
-- [ ] Create search API endpoint
-- [ ] Full-text search across posts, pages, products
-- [ ] Search results page with filters
-- [ ] Search suggestions/autocomplete
-- [ ] Search analytics (what are users searching for?)
-
-### ⬜ Task 4.3: Analytics Integration
-
-**Status**: Not Started
-**Priority**: Medium
-
-Built-in analytics:
-
-- [ ] Page view tracking
-- [ ] Unique visitors
-- [ ] Top content dashboard
-- [ ] Traffic sources
-- [ ] Google Analytics integration option
-
-### ⬜ Task 4.4: Email Notifications
-
-**Status**: Not Started
-**Priority**: Medium
-
-Transactional emails:
-
-- [ ] Email template system
-- [ ] Contact form notifications
-- [ ] User invitation emails
-- [ ] Password reset emails
-- [ ] Newsletter subscription. Allow admin to send newsletter from admin dashboard
-- [ ] Integration with SendGrid/Resend
+### ⬜ Task 4.4: Email Notifications - Not Started
 
 ---
 
 ## 🛒 PHASE 5: Future / E-commerce
 
-### ⬜ Task 5.1: Blog Comments
+### ⬜ Task 5.1: Blog Comments - Not Started
 
-**Status**: Not Started
-**Priority**: Low
+### ⬜ Task 5.2: Product Reviews - Not Started
 
-Commenting system:
+### ⬜ Task 5.3: E-commerce Features - Not Started
 
-- [ ] Create `Comment` model
-- [ ] Comment form on blog posts
-- [ ] Comment moderation (approve, spam, delete)
-- [ ] Nested replies
-- [ ] Email notifications for replies
-
-### ⬜ Task 5.2: Product Reviews
-
-**Status**: Not Started
-**Priority**: Low
-
-Review system:
-
-- [ ] Create `Review` model with rating
-- [ ] Review form on product pages
-- [ ] Review moderation
-- [ ] Average rating calculation
-- [ ] Verified purchase badge
-
-### ⬜ Task 5.3: E-commerce Features
-
-**Status**: Not Started
-**Priority**: Low
-
-Shopping functionality:
-
-- [ ] Shopping cart (Zustand state)
-- [ ] Checkout flow
-- [ ] Payment integration (Stripe)
-- [ ] Order management
-- [ ] Inventory tracking
-
-### ⬜ Task 5.4: Internationalization (i18n)
-
-**Status**: Not Started
-**Priority**: Low
-
-Multi-language support:
-
-- [ ] Content translation model
-- [ ] Language switcher
-- [ ] URL-based locale (`/en/`, `/km/`)
-- [ ] Admin UI translations
-- [ ] RTL support
+### ⬜ Task 5.4: Internationalization (i18n) - Not Started
 
 ---
 
 ## 🔧 PHASE 6: Production Readiness
 
-### ✅ Task 6.1: Tiptap Content Renderer
+### ✅ Task 6.1: Tiptap Content Renderer - Complete
 
-**Status**: Complete
-**Priority**: CRITICAL
+### ✅ Task 6.2: Build Fixes & Production Setup - Complete
 
-Render Tiptap JSON content on public pages:
-
-- [x] Create `TiptapRenderer` component for standard nodes (paragraph, heading, list, etc.)
-- [x] Add block renderers (Hero, Gallery, ProductGrid, CTA, Video, Testimonial)
-- [x] Update `[...slug]/page.tsx` to use renderer
-- [x] Update `/blog/[slug]/page.tsx` to use renderer
-- [x] Update `/products/[slug]/page.tsx` to use renderer
-
-**Files Created/Modified**:
-
-- `src/components/content/TiptapRenderer.tsx` - Full renderer with all node types and custom blocks
-- `src/app/[...slug]/page.tsx` - Updated to use TiptapRenderer
-- `src/app/blog/[slug]/page.tsx` - Updated to use TiptapRenderer
-- `src/app/products/[slug]/page.tsx` - Updated to use TiptapRenderer
-
-### ✅ Task 6.2: Build Fixes & Production Setup
-
-**Status**: Complete
-**Priority**: CRITICAL
-
-Fix build issues for production:
-
-- [x] Fix Prisma 7 adapter configuration (better-sqlite3)
-- [x] Fix TypeScript errors in revision service (restoreRevision)
-- [x] Fix Prisma model names (postCategory, postTag)
-- [x] Fix withPermission return types
-- [x] Add Suspense boundaries for useSearchParams (auth/login, auth/error)
-- [x] Install missing dependencies (date-fns)
-- [x] Fix Role enum usage (remove OWNER/MEMBER)
-
-**Files Modified**:
-
-- `src/lib/prisma.ts` - Updated for Prisma 7 adapter
-- `prisma/schema.prisma` - Removed engineType
-- `prisma.config.ts` - Added datasource URL
-- `src/modules/content/services/revision.ts` - Added restoreRevision function
-- `src/app/api/admin/posts/[id]/route.ts` - Fixed Prisma model names
-- `src/app/api/admin/pages/[id]/route.ts` - Fixed createRevision params
-- `src/app/api/admin/products/[id]/route.ts` - Fixed createRevision params
-- `src/app/api/admin/revisions/[id]/route.ts` - Fixed user destructuring
-- `src/modules/core/auth.ts` - Fixed Role enum values
-- `src/app/auth/login/page.tsx` - Added Suspense boundary
-- `src/app/auth/error/page.tsx` - Added Suspense boundary
-
-### ⬜ Task 6.3: Error & 404 Pages
-
-**Status**: Not Started
-**Priority**: Medium
-
-- [ ] Create styled 404 page
-- [ ] Create styled error page
-- [ ] Add error boundaries
+### ⬜ Task 6.3: Error & 404 Pages - Not Started
 
 ---
 
 ## 📊 Progress Tracker
 
-| Phase   | Tasks | Completed | Progress |
-| ------- | ----- | --------- | -------- |
-| Phase 0 | 19    | 19        | ✅ 100%  |
-| Phase 1 | 3     | 3         | ✅ 100%  |
-| Phase 2 | 6     | 5         | 🔄 83%   |
-| Phase 3 | 4     | 0         | ⬜ 0%    |
-| Phase 4 | 4     | 0         | ⬜ 0%    |
-| Phase 5 | 4     | 0         | ⬜ 0%    |
-| Phase 6 | 3     | 2         | 🔄 67%   |
+| Phase       | Description           | Tasks  | Completed | Progress   |
+| ----------- | --------------------- | ------ | --------- | ---------- |
+| Phase 0     | Foundation            | 19     | 19        | ✅ 100%    |
+| Phase 1     | Architecture          | 3      | 3         | ✅ 100%    |
+| Phase 2     | Content Experience    | 6      | 5         | 🔄 83%     |
+| Phase 3     | Workflow & API        | 4      | 0         | ⬜ 0%      |
+| Phase 4     | Marketing             | 4      | 0         | ⬜ 0%      |
+| Phase 5     | E-commerce            | 4      | 0         | ⬜ 0%      |
+| Phase 6     | Production            | 3      | 2         | 🔄 67%     |
+| **Phase 7** | **Grood Dynamic CMS** | **11** | **11**    | **✅ 100%** |
 
-**Total**: 42 tasks | **Completed**: 28 | **Remaining**: 14
+**Total**: 54 tasks | **Completed**: 40 | **Remaining**: 14
+
+---
+
+## 🎯 Current Focus: PHASE 7 - Grood Dynamic CMS
+
+**Goal**: Admin users can manage all website content through the dashboard.
+
+**Success Criteria**:
+
+1. ✅ Admin can create/edit/delete e-bikes with full specs
+2. ✅ Admin can manage accessories with categories
+3. ✅ Admin can manage store locations
+4. ✅ Admin can manage testimonials & FAQs
+5. ✅ Admin can build pages using block editor
+6. ✅ Admin can configure navigation menus
+7. ✅ Admin can update site settings
+8. ✅ All frontend pages render from CMS data
+9. ✅ Dashboard matches Grood brand aesthetic
+10. ✅ Mobile-responsive admin interface

@@ -32,6 +32,14 @@ model Organization {
   invitations OrganizationInvitation[]
   memberships OrganizationMembership[]
   revisions   Revision[]
+  
+  // Grood CMS relations
+  ebikes      EBike[]
+  accessories Accessory[]
+  stores      Store[]
+  groodTestimonials GroodTestimonial[]
+  faqs        FAQ[]
+  groodPages  GroodPage[]
 
   @@map("organizations")
 }
@@ -584,4 +592,256 @@ model Revision {
   @@index([contentType, contentId])
   @@index([organizationId])
   @@map("revisions")
+}
+
+// =====================
+// GROOD CMS MODELS
+// =====================
+
+// E-Bike Products
+model EBike {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String
+  tagline       String?
+  shortDescription String? // Brief description for cards
+  description   Json?    // Tiptap JSON
+  price         Float
+  originalPrice Float?   // For showing discounts
+  heroImage     String?
+  galleryImages Json?    // Array of image URLs
+  colors        Json?    // [{name, hex, image}]
+  specs         Json?    // {range, speed, weight, battery, motor, etc}
+  features      Json?    // [{icon, title, description}]
+  badge         String?  // "Best Seller", "New", etc
+  status        EBikeStatus @default(DRAFT)
+  order         Int      @default(0)
+  
+  // SEO
+  seoTitle      String?
+  seoDescription String?
+  ogImage       String?
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([slug, organizationId])
+  @@index([organizationId, status])
+  @@map("ebikes")
+}
+
+// Accessories
+model Accessory {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String
+  description   Json?    // Tiptap JSON
+  shortDesc     String?
+  price         Float
+  originalPrice Float?   // For showing discounts
+  image         String?
+  category      AccessoryCategory @default(OTHER)
+  badge         String?  // "New", "Sale", etc
+  rating        Float?
+  reviewCount   Int      @default(0)
+  inStock       Boolean  @default(true)
+  status        AccessoryStatus @default(DRAFT)
+  order         Int      @default(0)
+  
+  // SEO
+  seoTitle      String?
+  seoDescription String?
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([slug, organizationId])
+  @@index([organizationId, category, status])
+  @@map("accessories")
+}
+
+// Store Locations
+model Store {
+  id          String   @id @default(cuid())
+  name        String
+  type        StoreType @default(SERVICE_POINT)
+  address     String
+  city        String
+  country     String
+  phone       String?
+  email       String?
+  hours       String?  // e.g., "Mon-Fri: 9AM-6PM"
+  services    Json?    // Array of service names
+  image       String?
+  lat         Float?
+  lng         Float?
+  status      StoreStatus @default(ACTIVE)
+  featured    Boolean  @default(false)
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([organizationId, city, status])
+  @@map("stores")
+}
+
+// Press Quotes & Customer Testimonials
+model GroodTestimonial {
+  id        String   @id @default(cuid())
+  quote     String
+  source    String   // "Tech Review Asia", "CNN", etc.
+  author    String?  // Optional author name
+  rating    Int?     // 1-5 stars (for customer reviews)
+  type      TestimonialType @default(PRESS)
+  featured  Boolean  @default(false)
+  order     Int      @default(0)
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, type, featured])
+  @@map("grood_testimonials")
+}
+
+// FAQs
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   // Can be HTML or plain text
+  category  FAQCategory @default(GENERAL)
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, category])
+  @@map("faqs")
+}
+
+// Page Templates
+model PageTemplate {
+  id          String   @id @default(cuid())
+  name        String   // "Homepage", "Product Listing", etc.
+  slug        String   @unique
+  description String?
+  thumbnail   String?
+  blocks      Json     // Default block structure
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  pages       GroodPage[]
+
+  @@map("page_templates")
+}
+
+// Grood Pages (for block-based page building)
+model GroodPage {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String
+  blocks      Json     // Array of block configs
+  
+  // Template reference
+  templateId  String?
+  template    PageTemplate? @relation(fields: [templateId], references: [id])
+  
+  // SEO
+  seoTitle      String?
+  seoDescription String?
+  ogImage       String?
+  
+  status      GroodPageStatus @default(DRAFT)
+  publishedAt DateTime?
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([slug, organizationId])
+  @@index([organizationId, status])
+  @@map("grood_pages")
+}
+
+// =====================
+// GROOD ENUMS
+// =====================
+
+enum EBikeStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AccessoryCategory {
+  SAFETY      // Helmets, lights, locks
+  BAGS        // Panniers, baskets, bags
+  COMFORT     // Seats, grips, mirrors
+  TECH        // GPS, phone mounts, chargers
+  MAINTENANCE // Tools, cleaning, parts
+  OTHER
+}
+
+enum AccessoryStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum StoreType {
+  BRAND_STORE    // Full brand store
+  SERVICE_POINT  // Service/repair point
+  DEALER         // Authorized dealer
+}
+
+enum StoreStatus {
+  ACTIVE
+  COMING_SOON
+  CLOSED
+}
+
+enum TestimonialType {
+  PRESS     // Press/media quotes
+  CUSTOMER  // Customer reviews
+}
+
+enum FAQCategory {
+  GENERAL
+  SHIPPING
+  WARRANTY
+  PAYMENT
+  TECHNICAL
+  ORDERING
+  RETURNS
+}
+
+enum GroodPageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }

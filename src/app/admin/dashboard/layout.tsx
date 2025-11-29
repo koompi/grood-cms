@@ -21,13 +21,31 @@ import {
   X,
   Building2,
   Shield,
-  Zap
+  Zap,
+  Layout,
+  HelpCircle,
+  MapPin
 } from "lucide-react"
 import { useState } from "react"
 import { OrganizationSwitcher } from "@/components/organization-switcher"
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  {
+    name: 'Grood', icon: Zap, children: [
+      { name: 'E-Bikes', href: '/admin/ebikes', icon: Zap },
+      { name: 'Accessories', href: '/admin/accessories', icon: Package },
+      { name: 'Stores', href: '/admin/stores', icon: MapPin },
+      { name: 'Testimonials', href: '/admin/testimonials', icon: MessageSquare },
+      { name: 'FAQs', href: '/admin/faqs', icon: HelpCircle },
+    ]
+  },
+  {
+    name: 'Page Builder', icon: Layout, children: [
+      { name: 'Pages', href: '/admin/grood-pages', icon: FileText },
+      { name: 'Templates', href: '/admin/page-templates', icon: Layout },
+    ]
+  },
   {
     name: 'Content', icon: FileText, children: [
       { name: 'Posts', href: '/admin/content/posts', icon: FileText },
