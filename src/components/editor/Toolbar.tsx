@@ -22,6 +22,29 @@ import {
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 
+// Moved outside to avoid creating component during render
+interface ToolbarButtonProps {
+    onClick: () => void
+    active?: boolean
+    children: React.ReactNode
+    title: string
+}
+
+function ToolbarButton({ onClick, active, children, title }: ToolbarButtonProps) {
+    return (
+        <Button
+            type="button"
+            variant={active ? 'default' : 'ghost'}
+            size="sm"
+            onClick={onClick}
+            title={title}
+            className="h-8 w-8 p-0"
+        >
+            {children}
+        </Button>
+    )
+}
+
 interface ToolbarProps {
     editor: Editor | null
 }
@@ -45,29 +68,6 @@ export function Toolbar({ editor }: ToolbarProps) {
     const removeLink = () => {
         editor.chain().focus().unsetLink().run()
     }
-
-    const ToolbarButton = ({
-        onClick,
-        active,
-        children,
-        title,
-    }: {
-        onClick: () => void
-        active?: boolean
-        children: React.ReactNode
-        title: string
-    }) => (
-        <Button
-            type="button"
-            variant={active ? 'default' : 'ghost'}
-            size="sm"
-            onClick={onClick}
-            title={title}
-            className="h-8 w-8 p-0"
-        >
-            {children}
-        </Button>
-    )
 
     return (
         <div className="border-b bg-gray-50 p-2 flex flex-wrap gap-1 items-center sticky top-0 z-10">

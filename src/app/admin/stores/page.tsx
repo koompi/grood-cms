@@ -43,8 +43,8 @@ const storeTypes = [
 ];
 
 export default function StoresPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { status } = useSession()
+  const _router = useRouter()
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -149,7 +149,7 @@ export default function StoresPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 py-3 border-b border-gray-200">
         <div className="relative flex-1 max-w-sm">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -158,17 +158,17 @@ export default function StoresPage() {
             placeholder="Search stores..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-9"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {storeTypes.map((type) => (
             <Button
               key={type.value}
               variant={typeFilter === type.value ? "default" : "outline"}
               size="sm"
               onClick={() => setTypeFilter(type.value)}
-              className={typeFilter === type.value ? "bg-[#fdc501] hover:bg-[#e3b001] text-black" : ""}
+              className={typeFilter === type.value ? "bg-[#fdc501] hover:bg-[#e3b001] text-black h-9" : "h-9"}
             >
               {type.label}
             </Button>

@@ -47,15 +47,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const {
-      quote,
-      source,
-      author,
-      rating,
-      type,
-      featured,
-      order,
-    } = body;
+    const { quote, source, author, rating, type, featured, order } = body;
 
     const existing = await prisma.groodTestimonial.findFirst({
       where: { id, organizationId },

@@ -13,6 +13,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
+import { usePageContext } from "@/components/admin";
 
 interface Store {
   id: string;
@@ -37,6 +38,12 @@ export default function FindStorePage() {
   const [selectedCountry, setSelectedCountry] = useState("All");
   const [selectedStore, setSelectedStore] = useState<string | null>(null);
   const [countries, setCountries] = useState<string[]>(["All"]);
+  
+  // Set page context for admin toolbar
+  const { setPageContext } = usePageContext();
+  useEffect(() => {
+    setPageContext({ pageType: "store" });
+  }, [setPageContext]);
 
   useEffect(() => {
     async function fetchStores() {

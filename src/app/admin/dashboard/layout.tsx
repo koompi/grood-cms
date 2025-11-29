@@ -24,7 +24,10 @@ import {
   Zap,
   Layout,
   HelpCircle,
-  MapPin
+  MapPin,
+  Trash2,
+  Database,
+  Activity
 } from "lucide-react"
 import { useState } from "react"
 import { OrganizationSwitcher } from "@/components/organization-switcher"
@@ -59,6 +62,9 @@ const navigation = [
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Roles', href: '/admin/roles', icon: Shield },
   { name: 'Organizations', href: '/admin/organizations', icon: Building2 },
+  { name: 'Activity', href: '/admin/activity', icon: Activity },
+  { name: 'Trash', href: '/admin/trash', icon: Trash2 },
+  { name: 'Backups', href: '/admin/backups', icon: Database },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 
@@ -73,7 +79,7 @@ export default function AdminLayout({
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
       {/* Mobile sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -98,8 +104,8 @@ export default function AdminLayout({
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-[#1a1a1a] overflow-y-auto">
-          <div className="flex items-center gap-3 h-16 px-5 border-b border-white/10">
+        <div className="flex flex-col h-full bg-[#1a1a1a]">
+          <div className="flex items-center gap-3 h-16 flex-shrink-0 px-5 border-b border-white/10">
             <div className="w-9 h-9 bg-[#fdc501] rounded-lg flex items-center justify-center shadow-lg shadow-[#fdc501]/20">
               <Zap className="h-5 w-5 text-black" />
             </div>
@@ -142,8 +148,8 @@ export default function AdminLayout({
         </div>
 
         {/* Page content */}
-        <main className="py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="py-8 overflow-x-hidden">
+          <div className="max-w-full lg:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
@@ -165,46 +171,48 @@ function SidebarNav({
   isActive: (href: string) => boolean
 }) {
   return (
-    <nav className="flex-1 px-3 py-4 space-y-1">
-      {navigation.map((item) => (
-        <div key={item.name}>
-          {item.children ? (
-            <div className="space-y-1">
-              <p className="px-3 pt-5 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+    <nav className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 scrollbar-hide">
+        {navigation.map((item) => (
+          <div key={item.name}>
+            {item.children ? (
+              <div className="space-y-1">
+                <p className="px-3 pt-5 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  {item.name}
+                </p>
+                {item.children.map((child) => (
+                  <Link
+                    key={child.name}
+                    href={child.href}
+                    className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(child.href)
+                        ? 'bg-[#fdc501] text-black shadow-lg shadow-[#fdc501]/20'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      }`}
+                  >
+                    {child.icon && <child.icon className={`h-4 w-4 ${isActive(child.href) ? 'text-black' : 'text-gray-500 group-hover:text-gray-300'}`} />}
+                    {child.name}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <Link
+                href={item.href!}
+                className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href!)
+                    ? 'bg-[#fdc501] text-black shadow-lg shadow-[#fdc501]/20'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+              >
+                {item.icon && <item.icon className={`h-5 w-5 ${isActive(item.href!) ? 'text-black' : 'text-gray-500 group-hover:text-gray-300'
+                  }`} />}
                 {item.name}
-              </p>
-              {item.children.map((child) => (
-                <Link
-                  key={child.name}
-                  href={child.href}
-                  className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(child.href)
-                      ? 'bg-[#fdc501] text-black shadow-lg shadow-[#fdc501]/20'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                    }`}
-                >
-                  {child.icon && <child.icon className={`h-4 w-4 ${isActive(child.href) ? 'text-black' : 'text-gray-500 group-hover:text-gray-300'}`} />}
-                  {child.name}
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <Link
-              href={item.href!}
-              className={`group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href!)
-                  ? 'bg-[#fdc501] text-black shadow-lg shadow-[#fdc501]/20'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-            >
-              {item.icon && <item.icon className={`h-5 w-5 ${isActive(item.href!) ? 'text-black' : 'text-gray-500 group-hover:text-gray-300'
-                }`} />}
-              {item.name}
-            </Link>
-          )}
-        </div>
-      ))}
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
       
       {/* Version info at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5">
+      <div className="flex-shrink-0 p-4 border-t border-white/5">
         <div className="flex items-center gap-2 text-xs text-gray-600">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           <span>System Online</span>

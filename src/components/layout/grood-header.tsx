@@ -53,7 +53,7 @@ function isLightColor(r: number, g: number, b: number): boolean {
 export function GroodHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [_activeSection, setActiveSection] = useState<string | null>(null); // TODO: For future submenu feature
   const [isDarkMode, setIsDarkMode] = useState(true); // true = light text on dark bg
 
   // Handle keyboard shortcut (Cmd/Ctrl + K)
@@ -227,6 +227,7 @@ export function GroodHeader() {
               )} />
             </button>
 
+            {/* TODO: V2 - E-commerce cart
             <Link
               href="/cart"
               className={cn(
@@ -242,6 +243,7 @@ export function GroodHeader() {
                 isDarkMode ? "text-white" : "text-black"
               )} />
             </Link>
+            */}
           </div>
         </div>
       </header>
@@ -280,7 +282,7 @@ export function GroodHeader() {
             <X className="w-6 h-6 text-white" />
           </button>
 
-          {/* Cart in menu */}
+          {/* TODO: V2 - E-commerce cart in menu
           <Link
             href="/cart"
             onClick={() => setIsMenuOpen(false)}
@@ -288,6 +290,7 @@ export function GroodHeader() {
           >
             <ShoppingBag className="w-5 h-5 text-white" />
           </Link>
+          */}
 
           {/* Desktop Layout */}
           <div className="hidden lg:flex min-h-full">

@@ -168,50 +168,46 @@ export default function AccessoriesPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search accessories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <div className="flex gap-2">
-                {["all", "published", "draft"].map((status) => (
-                  <Button
-                    key={status}
-                    variant={statusFilter === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter(status)}
-                    className={statusFilter === status ? "bg-[#1a1a1a] text-white" : ""}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </Button>
-                ))}
-              </div>
-              <div className="h-8 w-px bg-gray-200 mx-2" />
-              <div className="flex gap-2 flex-wrap">
-                {["all", ...Object.keys(categoryLabels)].map((cat) => (
-                  <Button
-                    key={cat}
-                    variant={categoryFilter === cat ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCategoryFilter(cat)}
-                    className={categoryFilter === cat ? "bg-[#fdc501] text-black hover:bg-[#fdc501]/90" : ""}
-                  >
-                    {cat === "all" ? "All Categories" : categoryLabels[cat]}
-                  </Button>
-                ))}
-              </div>
-            </div>
+      <div className="flex flex-col gap-3 py-3 border-b border-gray-200">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search accessories..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-9"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <div className="flex gap-1.5">
+            {["all", "published", "draft"].map((status) => (
+              <Button
+                key={status}
+                variant={statusFilter === status ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(status)}
+                className={statusFilter === status ? "bg-[#1a1a1a] text-white h-8" : "h-8"}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </Button>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+          <div className="h-6 w-px bg-gray-200 mx-1" />
+          <div className="flex gap-1.5 flex-wrap">
+            {["all", ...Object.keys(categoryLabels)].map((cat) => (
+              <Button
+                key={cat}
+                variant={categoryFilter === cat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCategoryFilter(cat)}
+                className={categoryFilter === cat ? "bg-[#fdc501] text-black hover:bg-[#fdc501]/90 h-8" : "h-8"}
+              >
+                {cat === "all" ? "All Categories" : categoryLabels[cat]}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Accessories Grid */}
       {filteredAccessories.length === 0 ? (

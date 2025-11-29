@@ -82,11 +82,11 @@ export default function OurStoryPage() {
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-black leading-relaxed">
-              Since <span className="text-[#fdc501] font-bold">2020</span>, we've been on a relentless quest to 
+              Since <span className="text-[#fdc501] font-bold">2020</span>, we&apos;ve been on a relentless quest to 
               make the perfect city bike.
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-black leading-relaxed mt-6">
-              We've pioneered an electric revolution, developing next-level rides that 
+              We&apos;ve pioneered an electric revolution, developing next-level rides that 
               redefine the way we move from A to B in the city.
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-black leading-relaxed mt-6">
@@ -94,7 +94,7 @@ export default function OurStoryPage() {
               and create practically unstealable bikes with cutting-edge security.
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-black leading-relaxed mt-6">
-              The new Grood is changing what's possible in city movement. And we're 
+              The new Grood is changing what&apos;s possible in city movement. And we&apos;re 
               always placing riders at the core of every decision we make.
             </p>
           </div>
@@ -190,7 +190,7 @@ export default function OurStoryPage() {
               </p>
               <p className="text-xl text-gray-600 mb-8">
                 Headquartered in Phnom Penh with team members across Southeast Asia, 
-                we're a diverse group united by our passion for better cities.
+                we&apos;re a diverse group united by our passion for better cities.
               </p>
               <Link
                 href="/careers"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,8 @@ import StarterKit from '@tiptap/starter-kit'
 import { RevisionHistory } from '@/components/content/RevisionHistory'
 import { ScheduleDialog } from '@/components/content/ScheduleDialog'
 import { PreviewButton } from '@/components/preview/PreviewButton'
+import { useAutoSave } from '@/hooks/useAutoSave'
+import { AutoSaveIndicator } from '@/components/admin/AutoSaveIndicator'
 
 interface EditPageProps {
   params: Promise<{ id: string }>
@@ -30,6 +32,7 @@ export default function EditPageAdminPage({ params }: EditPageProps) {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false)
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null)
   const [isScheduling, setIsScheduling] = useState(false)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -49,7 +52,52 @@ export default function EditPageAdminPage({ params }: EditPageProps) {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px]',
       },
     },
+    onUpdate: () => {
+      // Trigger auto-save on editor content change
+      if (initialLoadComplete) {
+        triggerAutoSave()
+      }
+    },
   })
+
+  // Auto-save function
+  const performAutoSave = useCallback(async (data: unknown) => {
+    if (!pageId || !editor) return
+    
+    const saveData = data as { formData: typeof formData }
+
+    const response = await fetch(`/api/admin/pages/${pageId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...saveData.formData,
+        content: editor.getJSON() || {},
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to auto-save')
+    }
+  }, [pageId, editor])
+
+  // Auto-save hook
+  const autoSave = useAutoSave({
+    delay: 3000,
+    onSave: performAutoSave,
+    enabled: initialLoadComplete && !!pageId,
+  })
+
+  // Function to trigger auto-save
+  const triggerAutoSave = useCallback(() => {
+    autoSave.markDirty({ formData })
+  }, [formData, autoSave])
+
+  // Trigger auto-save when form data changes
+  useEffect(() => {
+    if (!initialLoadComplete) return
+    triggerAutoSave()
+  }, [formData, initialLoadComplete])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -91,6 +139,7 @@ export default function EditPageAdminPage({ params }: EditPageProps) {
         alert('Failed to load page')
       } finally {
         setIsFetching(false)
+        setTimeout(() => setInitialLoadComplete(true), 100)
       }
     }
 
@@ -100,6 +149,9 @@ export default function EditPageAdminPage({ params }: EditPageProps) {
   const handleSubmit = async (e: React.FormEvent, action: string = 'save') => {
     e.preventDefault()
     setIsLoading(true)
+    
+    // Cancel any pending auto-save
+    autoSave.cancelAutoSave()
 
     try {
       const pageData = {
@@ -117,6 +169,7 @@ export default function EditPageAdminPage({ params }: EditPageProps) {
       })
 
       if (response.ok) {
+        autoSave.resetDirty()
         router.push('/admin/content/pages')
       } else {
         const error = await response.json()
@@ -223,6 +276,12 @@ export default function EditPageAdminPage({ params }: EditPageProps) {
             </Button>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Edit Page</h1>
+          <AutoSaveIndicator
+            isDirty={autoSave.isDirty}
+            isSaving={autoSave.isSaving}
+            lastSavedAt={autoSave.lastSavedAt}
+            lastError={autoSave.lastError}
+          />
         </div>
         <div className="flex gap-2">
           {pageId && (

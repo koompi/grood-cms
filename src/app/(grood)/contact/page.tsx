@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Users,
 } from "lucide-react";
+import { usePageContext } from "@/components/admin";
 
 interface FAQ {
   id: string;
@@ -86,6 +87,12 @@ export default function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+
+  // Set page context for admin toolbar
+  const { setPageContext } = usePageContext();
+  useEffect(() => {
+    setPageContext({ pageType: "contact" });
+  }, [setPageContext]);
 
   useEffect(() => {
     async function fetchFAQs() {

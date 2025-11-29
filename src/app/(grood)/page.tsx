@@ -4,6 +4,7 @@ import { ArrowRight, Zap, Shield, Smartphone, MapPin } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { generateSEO, generateOrganizationJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { SetPageContext } from "@/components/admin";
 
 export const metadata = generateSEO({
   title: "Grood",
@@ -11,14 +12,6 @@ export const metadata = generateSEO({
   keywords: ["electric bikes", "e-bikes", "urban mobility", "grood", "commuter bikes", "sustainable transport"],
   type: "website",
 });
-
-interface EBikeSpecs {
-  range?: string;
-  speed?: string;
-  weight?: string;
-  battery?: string;
-  motor?: string;
-}
 
 interface EBikeColor {
   name: string;
@@ -67,6 +60,7 @@ export default async function HomePage() {
   const pressQuotes = await getTestimonials();
   return (
     <main className="flex flex-col">
+      <SetPageContext pageType="home" />
       <JsonLd data={generateOrganizationJsonLd()} />
       {/* Hero Section - Full Screen */}
       <section data-header-theme="dark" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -326,7 +320,7 @@ export default async function HomePage() {
                   className="text-center p-4 sm:p-8"
                 >
                   <p className="text-xl sm:text-2xl md:text-3xl font-bold text-black mb-4">
-                    "{quote.quote}"
+                    &ldquo;{quote.quote}&rdquo;
                   </p>
                   <p className="text-gray-500 text-sm sm:text-base">{quote.source}</p>
                 </div>

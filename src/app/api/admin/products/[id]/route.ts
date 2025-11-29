@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/modules/core/auth";
 import { prisma } from "@/lib/prisma";
 import { createRevision } from "@/modules/content/services/revision";
+import { slugify } from "@/lib/utils";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(
   request: NextRequest,
@@ -34,6 +36,100 @@ export async function GET(
     return NextResponse.json(product);
   } catch (error) {
     console.error("Product GET error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Partial update for inline editing
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+
+    // Get existing product
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    // Build update data from provided fields only
+    const updateData: Record<string, unknown> = {};
+
+    if (body.name !== undefined) {
+      updateData.name = body.name;
+      // Auto-update slug if name changes
+      if (body.name !== existingProduct.name) {
+        updateData.slug = slugify(body.name);
+      }
+    }
+    if (body.shortDescription !== undefined) {
+      updateData.shortDescription = body.shortDescription;
+    }
+    if (body.description !== undefined) {
+      updateData.description = body.description;
+    }
+    if (body.price !== undefined) {
+      updateData.price = parseFloat(body.price);
+    }
+    if (body.compareAtPrice !== undefined) {
+      updateData.compareAtPrice = body.compareAtPrice
+        ? parseFloat(body.compareAtPrice)
+        : null;
+    }
+    if (body.imageUrl !== undefined) {
+      updateData.imageUrl = body.imageUrl;
+    }
+    if (body.featuredImage !== undefined) {
+      updateData.featuredImage = body.featuredImage;
+    }
+    if (body.featured !== undefined) {
+      updateData.featured = body.featured;
+    }
+    if (body.status !== undefined) {
+      updateData.status = body.status;
+    }
+    if (body.specifications !== undefined) {
+      updateData.specifications = body.specifications;
+    }
+    if (body.seo !== undefined) {
+      updateData.seo = body.seo;
+    }
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: updateData,
+    });
+
+    // Log activity
+    if (session.user?.organizationId) {
+      await logActivity({
+        action: "update",
+        entityType: "product",
+        entityId: product.id,
+        entityTitle: product.name,
+        userId: session.user.id,
+        organizationId: session.user.organizationId,
+      });
+    }
+
+    return NextResponse.json(product);
+  } catch (error) {
+    console.error("Product PATCH error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -171,6 +267,18 @@ export async function PUT(
       },
     });
 
+    // Log activity
+    if (session.user?.organizationId) {
+      await logActivity({
+        action: "update",
+        entityType: "product",
+        entityId: product.id,
+        entityTitle: product.name,
+        userId: session.user.id,
+        organizationId: session.user.organizationId,
+      });
+    }
+
     return NextResponse.json(product);
   } catch (error) {
     console.error("Product PUT error:", error);
@@ -193,23 +301,54 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get("permanent") === "true";
 
-    // Delete category associations first
-    await prisma.categoryProduct.deleteMany({
-      where: { productId: id },
-    });
-
-    // Delete revisions
-    await prisma.revision.deleteMany({
-      where: {
-        contentType: "product",
-        contentId: id,
-      },
-    });
-
-    await prisma.product.delete({
+    // Get product name for activity log
+    const existingProduct = await prisma.product.findUnique({
       where: { id },
+      select: { name: true },
     });
+
+    if (!existingProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    if (permanent) {
+      // Permanent delete - remove all related data
+      await prisma.categoryProduct.deleteMany({
+        where: { productId: id },
+      });
+
+      await prisma.revision.deleteMany({
+        where: {
+          contentType: "product",
+          contentId: id,
+        },
+      });
+
+      await prisma.product.delete({
+        where: { id },
+      });
+    } else {
+      // Soft delete - move to trash
+      await prisma.product.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+    }
+
+    // Log activity
+    if (session.user?.organizationId) {
+      await logActivity({
+        action: permanent ? "delete" : "trash",
+        entityType: "product",
+        entityId: id,
+        entityTitle: existingProduct.name,
+        userId: session.user.id,
+        organizationId: session.user.organizationId,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

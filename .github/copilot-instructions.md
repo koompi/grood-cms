@@ -1,4 +1,6 @@
-# SmallWorld CMS - AI Coding Instructions
+# Grood CMS - AI Coding Instructions
+
+> **Version 1.0** - Production-ready multi-tenant CMS
 
 ## Architecture Overview
 
@@ -8,16 +10,25 @@
 src/
 ├── app/                    # Next.js App Router
 │   ├── [...slug]/         # Dynamic CMS pages (Server Components)
+│   ├── (grood)/           # Grood e-bike branded pages
 │   ├── admin/             # Admin dashboard (Client Components)
 │   └── api/admin/         # Protected API routes
 ├── modules/               # Domain logic (tenant-agnostic)
 │   ├── core/auth.ts       # NextAuth config + Koompi OAuth
-│   └── content/services/  # Post, Page, Revision services
+│   ├── content/services/  # Post, Page, Revision, Scheduling services
+│   └── ecommerce/         # Product, E-bike services
+├── hooks/
+│   └── useAutoSave.ts     # Auto-save drafts hook
 ├── lib/
 │   ├── prisma.ts          # DB client singleton
 │   ├── permissions.ts     # RBAC middleware (server)
-│   └── permissions-client.tsx  # RBAC hooks (client)
-└── components/ui/         # shadcn/ui components
+│   ├── permissions-client.tsx  # RBAC hooks (client)
+│   ├── backup.ts          # Database backup/restore
+│   └── image-optimizer.ts # Sharp image processing
+└── components/
+    ├── ui/                # shadcn/ui components
+    ├── admin/             # Admin toolbar, AutoSaveIndicator
+    └── editor/            # Tiptap RichEditor, blocks
 ```
 
 ## Critical Patterns
@@ -119,11 +130,54 @@ Custom blocks available when `enableBlocks={true}` on `RichEditor`:
 
 ## Key Services
 
-| Service    | Location                                     | Purpose                       |
-| ---------- | -------------------------------------------- | ----------------------------- |
-| Auth       | `src/modules/core/auth.ts`                   | NextAuth config, Koompi OAuth |
-| Revisions  | `src/modules/content/services/revision.ts`   | Content versioning            |
-| Scheduling | `src/modules/content/services/scheduling.ts` | Scheduled publishing          |
+| Service        | Location                                     | Purpose                       |
+| -------------- | -------------------------------------------- | ----------------------------- |
+| Auth           | `src/modules/core/auth.ts`                   | NextAuth config, Koompi OAuth |
+| Revisions      | `src/modules/content/services/revision.ts`   | Content versioning            |
+| Scheduling     | `src/modules/content/services/scheduling.ts` | Scheduled publishing          |
+| Backup         | `src/lib/backup.ts`                          | Database backup/restore       |
+| Image Optimize | `src/lib/image-optimizer.ts`                 | Sharp WebP conversion         |
+| Auto-Save      | `src/hooks/useAutoSave.ts`                   | Draft auto-save hook          |
+
+## Auto-Save Pattern
+
+Use the `useAutoSave` hook for content editors:
+
+```typescript
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { AutoSaveIndicator } from "@/components/admin/AutoSaveIndicator";
+
+const { isDirty, isSaving, lastSavedAt, lastError, markDirty, resetDirty } =
+  useAutoSave({
+    onSave: async () => {
+      await fetch(`/api/admin/posts/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(formData),
+      });
+    },
+    debounceMs: 3000,
+  });
+
+// Mark dirty on changes
+const handleChange = (value: string) => {
+  setFormData({ ...formData, title: value });
+  markDirty();
+};
+
+// Reset after manual save
+const handleSubmit = async () => {
+  await saveToServer();
+  resetDirty();
+};
+
+// Show indicator
+<AutoSaveIndicator
+  isDirty={isDirty}
+  isSaving={isSaving}
+  lastSavedAt={lastSavedAt}
+  lastError={lastError}
+/>;
+```
 
 ## Commands
 

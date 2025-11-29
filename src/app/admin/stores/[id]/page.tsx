@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { redirect, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -66,7 +65,7 @@ export default function StoreEditPage({ params }: { params: Promise<{ id: string
   const { id } = use(params);
   const isNew = id === "new";
   
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [form, setForm] = useState<StoreForm>(defaultForm);
   const [loading, setLoading] = useState(!isNew);

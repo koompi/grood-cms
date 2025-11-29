@@ -7,7 +7,12 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const statusParam = searchParams.get("status");
-    const status: EBikeStatus = statusParam === "DRAFT" ? "DRAFT" : statusParam === "ARCHIVED" ? "ARCHIVED" : "PUBLISHED";
+    const status: EBikeStatus =
+      statusParam === "DRAFT"
+        ? "DRAFT"
+        : statusParam === "ARCHIVED"
+        ? "ARCHIVED"
+        : "PUBLISHED";
     const slug = searchParams.get("slug");
 
     // If slug is provided, get single e-bike

@@ -32,6 +32,7 @@ model Organization {
   invitations OrganizationInvitation[]
   memberships OrganizationMembership[]
   revisions   Revision[]
+  activityLogs ActivityLog[]
   
   // Grood CMS relations
   ebikes      EBike[]
@@ -110,6 +111,7 @@ model User {
   media         Media[]
   memberships   OrganizationMembership[]
   revisions     Revision[]
+  activityLogs  ActivityLog[]
 
   @@map("users")
 }
@@ -159,6 +161,7 @@ model Post {
   updatedAt     DateTime      @updatedAt
   publishedAt   DateTime?
   scheduledAt   DateTime?     // For scheduled publishing
+  deletedAt     DateTime?     // For soft delete / trash
 
   // Multi-tenancy
   organizationId String
@@ -172,6 +175,7 @@ model Post {
   media         Media[]
 
   @@unique([slug, organizationId])
+  @@index([organizationId, deletedAt])
   @@map("posts")
 }
 
@@ -229,6 +233,7 @@ model Product {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   scheduledAt       DateTime?         // For scheduled activation
+  deletedAt         DateTime?         // For soft delete / trash
 
   // Multi-tenancy
   organizationId String
@@ -242,6 +247,7 @@ model Product {
 
   @@unique([slug, organizationId])
   @@unique([sku, organizationId])
+  @@index([organizationId, deletedAt])
   @@map("products")
 }
 
@@ -294,12 +300,14 @@ model Page {
   updatedAt   DateTime   @updatedAt
   publishedAt DateTime?
   scheduledAt DateTime?  // For scheduled publishing
+  deletedAt   DateTime?  // For soft delete / trash
 
   // Multi-tenancy
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([slug, organizationId])
+  @@index([organizationId, deletedAt])
   @@map("pages")
 }
 
@@ -592,6 +600,32 @@ model Revision {
   @@index([contentType, contentId])
   @@index([organizationId])
   @@map("revisions")
+}
+
+// Activity Log for tracking changes
+model ActivityLog {
+  id          String   @id @default(cuid())
+  action      String   // 'create', 'update', 'delete', 'publish', 'duplicate', etc.
+  entityType  String   // 'post', 'page', 'product', 'media', 'user', etc.
+  entityId    String   // ID of the affected entity
+  entityTitle String?  // Title/name for display (e.g., post title)
+  details     Json?    // Additional details about the change
+  ipAddress   String?  // User's IP address
+  userAgent   String?  // Browser/client info
+  createdAt   DateTime @default(now())
+  
+  // Who performed the action
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Multi-tenancy
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@map("activity_logs")
 }
 
 // =====================

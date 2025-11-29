@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/modules/core/auth";
 import { prisma } from "@/lib/prisma";
 import { createRevision } from "@/modules/content/services/revision";
+import { slugify } from "@/lib/utils";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(
   request: NextRequest,
@@ -46,6 +48,83 @@ export async function GET(
     return NextResponse.json(post);
   } catch (error) {
     console.error("Post GET error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Partial update for inline editing
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+
+    // Get existing post
+    const existingPost = await prisma.post.findUnique({
+      where: { id },
+    });
+
+    if (!existingPost) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Build update data from provided fields only
+    const updateData: Record<string, unknown> = {};
+
+    if (body.title !== undefined) {
+      updateData.title = body.title;
+      // Auto-update slug if title changes
+      if (body.title !== existingPost.title) {
+        updateData.slug = slugify(body.title);
+      }
+    }
+    if (body.content !== undefined) {
+      updateData.content = body.content;
+    }
+    if (body.excerpt !== undefined) {
+      updateData.excerpt = body.excerpt;
+    }
+    if (body.status !== undefined) {
+      updateData.status = body.status;
+    }
+    if (body.featuredImage !== undefined) {
+      updateData.featuredImage = body.featuredImage;
+    }
+    if (body.seo !== undefined) {
+      updateData.seo = body.seo;
+    }
+
+    const post = await prisma.post.update({
+      where: { id },
+      data: updateData,
+    });
+
+    // Log activity
+    if (session.user?.organizationId) {
+      await logActivity({
+        action: "update",
+        entityType: "post",
+        entityId: post.id,
+        entityTitle: post.title,
+        userId: session.user.id,
+        organizationId: session.user.organizationId,
+      });
+    }
+
+    return NextResponse.json(post);
+  } catch (error) {
+    console.error("Post PATCH error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -192,6 +271,18 @@ export async function PUT(
       },
     });
 
+    // Log activity
+    if (session.user?.organizationId) {
+      await logActivity({
+        action: "update",
+        entityType: "post",
+        entityId: post.id,
+        entityTitle: post.title,
+        userId: session.user.id,
+        organizationId: session.user.organizationId,
+      });
+    }
+
     return NextResponse.json(post);
   } catch (error) {
     console.error("Post PUT error:", error);
@@ -214,29 +305,58 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get("permanent") === "true";
 
-    // Delete category associations first
-    await prisma.postCategory.deleteMany({
-      where: { postId: id },
-    });
-
-    // Delete tag associations
-    await prisma.postTag.deleteMany({
-      where: { postId: id },
-    });
-
-    // Delete revisions
-    await prisma.revision.deleteMany({
-      where: {
-        contentType: "post",
-        contentId: id,
-      },
-    });
-
-    // Delete post
-    await prisma.post.delete({
+    // Get post title for activity log
+    const existingPost = await prisma.post.findUnique({
       where: { id },
+      select: { title: true },
     });
+
+    if (!existingPost) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (permanent) {
+      // Permanent delete - remove all related data
+      await prisma.postCategory.deleteMany({
+        where: { postId: id },
+      });
+
+      await prisma.postTag.deleteMany({
+        where: { postId: id },
+      });
+
+      await prisma.revision.deleteMany({
+        where: {
+          contentType: "post",
+          contentId: id,
+        },
+      });
+
+      await prisma.post.delete({
+        where: { id },
+      });
+    } else {
+      // Soft delete - move to trash
+      await prisma.post.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+    }
+
+    // Log activity
+    if (session.user?.organizationId) {
+      await logActivity({
+        action: permanent ? "delete" : "trash",
+        entityType: "post",
+        entityId: id,
+        entityTitle: existingPost.title,
+        userId: session.user.id,
+        organizationId: session.user.organizationId,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 
 export default function AdminError({
   error,
@@ -64,12 +65,12 @@ export default function AdminError({
             </svg>
             Try Again
           </button>
-          <a
+          <Link
             href="/admin/dashboard"
             className="inline-flex items-center justify-center px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
           >
             Dashboard
-          </a>
+          </Link>
         </div>
       </div>
     </div>

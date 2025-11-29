@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { redirect, useRouter, useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/select'
 import { RevisionHistory } from '@/components/content/RevisionHistory'
 import { PreviewButton } from '@/components/preview/PreviewButton'
+import { useAutoSave } from '@/hooks/useAutoSave'
+import { AutoSaveIndicator } from '@/components/admin/AutoSaveIndicator'
 
 interface Product {
   id: string
@@ -44,6 +46,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -64,6 +67,46 @@ export default function EditProductPage() {
       metaDescription: '',
     }),
   })
+
+  // Auto-save function
+  const performAutoSave = useCallback(async (data: unknown) => {
+    if (!productId) return
+    
+    const saveData = data as { formData: typeof formData }
+
+    const response = await fetch(`/api/admin/products/${productId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...saveData.formData,
+        specifications: JSON.parse(saveData.formData.specifications || '{}'),
+        seo: JSON.parse(saveData.formData.seo || '{}'),
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to auto-save')
+    }
+  }, [productId])
+
+  // Auto-save hook
+  const autoSave = useAutoSave({
+    delay: 3000,
+    onSave: performAutoSave,
+    enabled: initialLoadComplete && !!productId,
+  })
+
+  // Function to trigger auto-save
+  const triggerAutoSave = useCallback(() => {
+    autoSave.markDirty({ formData })
+  }, [formData, autoSave])
+
+  // Trigger auto-save when form data changes
+  useEffect(() => {
+    if (!initialLoadComplete) return
+    triggerAutoSave()
+  }, [formData, initialLoadComplete])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -113,6 +156,8 @@ export default function EditProductPage() {
       setError('Failed to load product')
     } finally {
       setLoading(false)
+      // Set initial load complete after a short delay to prevent immediate auto-save
+      setTimeout(() => setInitialLoadComplete(true), 100)
     }
   }
 
@@ -120,6 +165,9 @@ export default function EditProductPage() {
     e.preventDefault()
     setError('')
     setSaving(true)
+
+    // Cancel any pending auto-save
+    autoSave.cancelAutoSave()
 
     try {
       // Validate required fields
@@ -157,6 +205,7 @@ export default function EditProductPage() {
         return
       }
 
+      autoSave.resetDirty()
       router.push('/admin/content/products')
     } catch (err) {
       console.error('Update product error:', err)
@@ -180,7 +229,15 @@ export default function EditProductPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Edit Product</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Edit Product</h1>
+          <AutoSaveIndicator
+            isDirty={autoSave.isDirty}
+            isSaving={autoSave.isSaving}
+            lastSavedAt={autoSave.lastSavedAt}
+            lastError={autoSave.lastError}
+          />
+        </div>
         <div className="flex gap-2">
           {productId && (
             <>

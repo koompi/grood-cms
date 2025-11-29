@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,8 @@ import { RichEditor } from '@/components/editor/RichEditor'
 import { RevisionHistory } from '@/components/content/RevisionHistory'
 import { ScheduleDialog } from '@/components/content/ScheduleDialog'
 import { PreviewButton } from '@/components/preview/PreviewButton'
+import { useAutoSave } from '@/hooks/useAutoSave'
+import { AutoSaveIndicator } from '@/components/admin/AutoSaveIndicator'
 
 interface Category {
   id: string
@@ -38,6 +40,7 @@ export default function EditPostPage({ params }: EditPostProps) {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false)
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null)
   const [isScheduling, setIsScheduling] = useState(false)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -50,6 +53,52 @@ export default function EditPostPage({ params }: EditPostProps) {
       keywords: '',
     },
   })
+
+  // Auto-save function
+  const performAutoSave = useCallback(async (data: unknown) => {
+    if (!postId) return
+    
+    const saveData = data as {
+      formData: typeof formData
+      editorContent: any
+      selectedCategories: string[]
+    }
+
+    const response = await fetch(`/api/admin/posts/${postId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...saveData.formData,
+        slug: saveData.formData.slug || generateSlug(saveData.formData.title),
+        content: saveData.editorContent || {},
+        categoryIds: saveData.selectedCategories,
+        // Keep current status, don't change to published
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to auto-save')
+    }
+  }, [postId])
+
+  // Auto-save hook
+  const autoSave = useAutoSave({
+    delay: 3000, // 3 seconds after last change
+    onSave: performAutoSave,
+    enabled: initialLoadComplete && !!postId,
+  })
+
+  // Trigger auto-save when content changes
+  useEffect(() => {
+    if (!initialLoadComplete) return
+    
+    autoSave.markDirty({
+      formData,
+      editorContent,
+      selectedCategories,
+    })
+  }, [formData, editorContent, selectedCategories, initialLoadComplete])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -108,22 +157,27 @@ export default function EditPostPage({ params }: EditPostProps) {
         alert('Failed to load post')
       } finally {
         setIsFetching(false)
+        // Mark initial load as complete after a brief delay
+        setTimeout(() => setInitialLoadComplete(true), 100)
       }
     }
 
     fetchPost()
   }, [session, status, params, router])
 
-  const generateSlug = (title: string) => {
+  const generateSlug = useCallback((title: string) => {
     return title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
-  }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent, action: string = 'save') => {
     e.preventDefault()
     setIsLoading(true)
+    
+    // Cancel any pending auto-save
+    autoSave.cancelAutoSave()
 
     try {
       const postData = {
@@ -143,6 +197,7 @@ export default function EditPostPage({ params }: EditPostProps) {
       })
 
       if (response.ok) {
+        autoSave.resetDirty()
         router.push('/admin/content/posts')
       } else {
         const error = await response.json()
@@ -257,6 +312,13 @@ export default function EditPostPage({ params }: EditPostProps) {
             </Button>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Edit Post</h1>
+          {/* Auto-save indicator */}
+          <AutoSaveIndicator
+            isDirty={autoSave.isDirty}
+            isSaving={autoSave.isSaving}
+            lastSavedAt={autoSave.lastSavedAt}
+            lastError={autoSave.lastError}
+          />
         </div>
         <div className="flex gap-2">
           {postId && (
@@ -288,14 +350,14 @@ export default function EditPostPage({ params }: EditPostProps) {
           <Button
             variant="outline"
             onClick={(e) => handleSubmit(e, 'save')}
-            disabled={isLoading}
+            disabled={isLoading || autoSave.isSaving}
           >
             <Save className="mr-2 h-4 w-4" />
             Save
           </Button>
           <Button
             onClick={(e) => handleSubmit(e, 'publish')}
-            disabled={isLoading}
+            disabled={isLoading || autoSave.isSaving}
           >
             <Eye className="mr-2 h-4 w-4" />
             Publish

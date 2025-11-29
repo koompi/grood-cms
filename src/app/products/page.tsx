@@ -1,17 +1,19 @@
-import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Star } from 'lucide-react'
 
 import { getProducts, getProductCategories } from '@/modules/ecommerce/services/product'
 
+interface Review {
+  rating: number
+}
+
 export default async function ProductsPage() {
   const products = await getProducts()
   const categories = await getProductCategories()
 
-  const calculateRating = (reviews: any[]) => {
+  const calculateRating = (reviews: Review[]) => {
     if (reviews.length === 0) return 0
     const sum = reviews.reduce((acc, review) => acc + review.rating, 0)
     return (sum / reviews.length).toFixed(1)

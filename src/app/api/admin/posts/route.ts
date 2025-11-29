@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { withPermission } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     const where: any = {
       organizationId,
+      deletedAt: null, // Only show non-deleted posts
     };
 
     if (status) {
@@ -124,6 +126,16 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    // Log activity
+    await logActivity({
+      action: "create",
+      entityType: "post",
+      entityId: post.id,
+      entityTitle: post.title,
+      userId: user.id,
+      organizationId,
     });
 
     return NextResponse.json(post);

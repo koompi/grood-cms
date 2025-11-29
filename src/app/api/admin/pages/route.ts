@@ -3,6 +3,7 @@ import { slugify } from "@/lib/utils";
 import { createPage } from "@/modules/content/services/page";
 import { prisma } from "@/lib/prisma";
 import { withPermission } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     const where: any = {
       organizationId,
+      deletedAt: null, // Only show non-deleted pages
     };
 
     if (status) where.status = status;
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest) {
   try {
     const authResult = await withPermission("pages", "create");
     if (authResult instanceof NextResponse) return authResult;
-    const { organizationId } = authResult;
+    const { user, organizationId } = authResult;
 
     const body = await request.json();
     const { title, content, status, template, seo } = body;
@@ -84,6 +86,16 @@ export async function POST(request: NextRequest) {
       status,
       template,
       seo,
+      organizationId,
+    });
+
+    // Log activity
+    await logActivity({
+      action: "create",
+      entityType: "page",
+      entityId: page.id,
+      entityTitle: page.title,
+      userId: user.id,
       organizationId,
     });
 

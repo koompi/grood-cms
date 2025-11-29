@@ -1,31 +1,31 @@
-import { Metadata } from 'next'
+import { Metadata } from "next";
 
 interface SEOConfig {
-  title: string
-  description: string
-  keywords?: string[]
-  image?: string
-  url?: string
-  type?: 'website' | 'article' | 'product'
-  publishedTime?: string
-  modifiedTime?: string
-  author?: string
-  section?: string
-  tags?: string[]
+  title: string;
+  description: string;
+  keywords?: string[];
+  image?: string;
+  url?: string;
+  type?: "website" | "article" | "product";
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+  section?: string;
+  tags?: string[];
   price?: {
-    amount: number
-    currency: string
-  }
-  availability?: 'in stock' | 'out of stock' | 'preorder'
+    amount: number;
+    currency: string;
+  };
+  availability?: "in stock" | "out of stock" | "preorder";
 }
 
 const siteConfig = {
-  name: 'Grood',
-  tagline: 'Electric Bikes for Urban Mobility',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://grood.com',
-  twitterHandle: '@groodbikes',
-  defaultImage: '/images/og-default.jpg',
-}
+  name: "Grood",
+  tagline: "Electric Bikes for Urban Mobility",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://grood.com",
+  twitterHandle: "@groodbikes",
+  defaultImage: "/images/og-default.jpg",
+};
 
 export function generateSEO(config: SEOConfig): Metadata {
   const {
@@ -34,7 +34,7 @@ export function generateSEO(config: SEOConfig): Metadata {
     keywords = [],
     image = siteConfig.defaultImage,
     url,
-    type = 'website',
+    type = "website",
     publishedTime,
     modifiedTime,
     author,
@@ -42,15 +42,14 @@ export function generateSEO(config: SEOConfig): Metadata {
     tags = [],
     price,
     availability,
-  } = config
+  } = config;
 
-  const fullTitle = title === siteConfig.name 
-    ? title 
-    : `${title} | ${siteConfig.name}`
-  
-  const imageUrl = image.startsWith('http') 
-    ? image 
-    : `${siteConfig.url}${image}`
+  const fullTitle =
+    title === siteConfig.name ? title : `${title} | ${siteConfig.name}`;
+
+  const imageUrl = image.startsWith("http")
+    ? image
+    : `${siteConfig.url}${image}`;
 
   const metadata: Metadata = {
     title: fullTitle,
@@ -70,11 +69,16 @@ export function generateSEO(config: SEOConfig): Metadata {
           alt: title,
         },
       ],
-      locale: 'en_US',
-      type: type === 'article' ? 'article' : type === 'product' ? 'website' : 'website',
+      locale: "en_US",
+      type:
+        type === "article"
+          ? "article"
+          : type === "product"
+          ? "website"
+          : "website",
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title: fullTitle,
       description,
       images: [imageUrl],
@@ -87,195 +91,202 @@ export function generateSEO(config: SEOConfig): Metadata {
       googleBot: {
         index: true,
         follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
       },
     },
     alternates: {
       canonical: url,
     },
-  }
+  };
 
   // Add article-specific metadata
-  if (type === 'article' && metadata.openGraph) {
-    (metadata.openGraph as Record<string, unknown>).type = 'article'
+  if (type === "article" && metadata.openGraph) {
+    (metadata.openGraph as Record<string, unknown>).type = "article";
     if (publishedTime) {
-      (metadata.openGraph as Record<string, unknown>).publishedTime = publishedTime
+      (metadata.openGraph as Record<string, unknown>).publishedTime =
+        publishedTime;
     }
     if (modifiedTime) {
-      (metadata.openGraph as Record<string, unknown>).modifiedTime = modifiedTime
+      (metadata.openGraph as Record<string, unknown>).modifiedTime =
+        modifiedTime;
     }
     if (author) {
-      (metadata.openGraph as Record<string, unknown>).authors = [author]
+      (metadata.openGraph as Record<string, unknown>).authors = [author];
     }
     if (section) {
-      (metadata.openGraph as Record<string, unknown>).section = section
+      (metadata.openGraph as Record<string, unknown>).section = section;
     }
     if (tags.length > 0) {
-      (metadata.openGraph as Record<string, unknown>).tags = tags
+      (metadata.openGraph as Record<string, unknown>).tags = tags;
     }
   }
 
   // Add product-specific metadata
-  if (type === 'product' && price) {
+  if (type === "product" && price) {
     metadata.other = {
-      'product:price:amount': price.amount.toString(),
-      'product:price:currency': price.currency,
-      ...(availability && { 'product:availability': availability }),
-    }
+      "product:price:amount": price.amount.toString(),
+      "product:price:currency": price.currency,
+      ...(availability && { "product:availability": availability }),
+    };
   }
 
-  return metadata
+  return metadata;
 }
 
 // Generate JSON-LD structured data
 export function generateProductJsonLd(product: {
-  name: string
-  description: string
-  image: string
-  price: number
-  currency?: string
-  sku?: string
-  brand?: string
-  availability?: 'InStock' | 'OutOfStock' | 'PreOrder'
-  url: string
+  name: string;
+  description: string;
+  image: string;
+  price: number;
+  currency?: string;
+  sku?: string;
+  brand?: string;
+  availability?: "InStock" | "OutOfStock" | "PreOrder";
+  url: string;
 }) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+    "@context": "https://schema.org",
+    "@type": "Product",
     name: product.name,
     description: product.description,
     image: product.image,
     sku: product.sku,
     brand: {
-      '@type': 'Brand',
-      name: product.brand || 'Grood',
+      "@type": "Brand",
+      name: product.brand || "Grood",
     },
     offers: {
-      '@type': 'Offer',
+      "@type": "Offer",
       price: product.price,
-      priceCurrency: product.currency || 'USD',
-      availability: `https://schema.org/${product.availability || 'InStock'}`,
+      priceCurrency: product.currency || "USD",
+      availability: `https://schema.org/${product.availability || "InStock"}`,
       url: product.url,
     },
-  }
+  };
 }
 
 export function generateArticleJsonLd(article: {
-  title: string
-  description: string
-  image: string
-  publishedTime: string
-  modifiedTime?: string
-  author: string
-  url: string
+  title: string;
+  description: string;
+  image: string;
+  publishedTime: string;
+  modifiedTime?: string;
+  author: string;
+  url: string;
 }) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
+    "@context": "https://schema.org",
+    "@type": "Article",
     headline: article.title,
     description: article.description,
     image: article.image,
     datePublished: article.publishedTime,
     dateModified: article.modifiedTime || article.publishedTime,
     author: {
-      '@type': 'Person',
+      "@type": "Person",
       name: article.author,
     },
     publisher: {
-      '@type': 'Organization',
-      name: 'Grood',
+      "@type": "Organization",
+      name: "Grood",
       logo: {
-        '@type': 'ImageObject',
+        "@type": "ImageObject",
         url: `${siteConfig.url}/images/logo.png`,
       },
     },
     mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': article.url,
+      "@type": "WebPage",
+      "@id": article.url,
     },
-  }
+  };
 }
 
 export function generateOrganizationJsonLd() {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Grood',
-    description: 'Premium electric bikes for urban mobility',
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Grood",
+    description: "Premium electric bikes for urban mobility",
     url: siteConfig.url,
     logo: `${siteConfig.url}/images/logo.png`,
     sameAs: [
-      'https://twitter.com/groodbikes',
-      'https://instagram.com/groodbikes',
-      'https://facebook.com/groodbikes',
+      "https://twitter.com/groodbikes",
+      "https://instagram.com/groodbikes",
+      "https://facebook.com/groodbikes",
     ],
     contactPoint: {
-      '@type': 'ContactPoint',
-      telephone: '+1-800-GROOD',
-      contactType: 'customer service',
-      availableLanguage: ['English'],
+      "@type": "ContactPoint",
+      telephone: "+1-800-GROOD",
+      contactType: "customer service",
+      availableLanguage: ["English"],
     },
-  }
+  };
 }
 
 export function generateLocalBusinessJsonLd(store: {
-  name: string
-  address: string
-  city: string
-  country: string
-  phone?: string
-  email?: string
-  lat?: number
-  lng?: number
+  name: string;
+  address: string;
+  city: string;
+  country: string;
+  phone?: string;
+  email?: string;
+  lat?: number;
+  lng?: number;
 }) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
     name: store.name,
     address: {
-      '@type': 'PostalAddress',
+      "@type": "PostalAddress",
       streetAddress: store.address,
       addressLocality: store.city,
       addressCountry: store.country,
     },
     telephone: store.phone,
     email: store.email,
-    ...(store.lat && store.lng && {
-      geo: {
-        '@type': 'GeoCoordinates',
-        latitude: store.lat,
-        longitude: store.lng,
-      },
-    }),
-  }
+    ...(store.lat &&
+      store.lng && {
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: store.lat,
+          longitude: store.lng,
+        },
+      }),
+  };
 }
 
-export function generateBreadcrumbJsonLd(items: { name: string; url: string }[]) {
+export function generateBreadcrumbJsonLd(
+  items: { name: string; url: string }[]
+) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: index + 1,
       name: item.name,
       item: item.url,
     })),
-  }
+  };
 }
 
-export function generateFAQJsonLd(faqs: { question: string; answer: string }[]) {
+export function generateFAQJsonLd(
+  faqs: { question: string; answer: string }[]
+) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
     mainEntity: faqs.map((faq) => ({
-      '@type': 'Question',
+      "@type": "Question",
       name: faq.question,
       acceptedAnswer: {
-        '@type': 'Answer',
+        "@type": "Answer",
         text: faq.answer,
       },
     })),
-  }
+  };
 }

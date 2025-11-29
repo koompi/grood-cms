@@ -38,8 +38,8 @@ const testimonialTypes = [
 ];
 
 export default function TestimonialsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { status } = useSession()
+  const _router = useRouter()
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("all");
@@ -137,15 +137,15 @@ export default function TestimonialsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-3 py-3 border-b border-gray-200">
+        <div className="flex gap-1.5">
           {testimonialTypes.map((type) => (
             <Button
               key={type.value}
               variant={typeFilter === type.value ? "default" : "outline"}
               size="sm"
               onClick={() => setTypeFilter(type.value)}
-              className={typeFilter === type.value ? "bg-[#fdc501] hover:bg-[#e3b001] text-black" : ""}
+              className={typeFilter === type.value ? "bg-[#fdc501] hover:bg-[#e3b001] text-black h-9" : "h-9"}
             >
               {type.label}
             </Button>
@@ -155,7 +155,7 @@ export default function TestimonialsPage() {
           variant={showFeatured ? "default" : "outline"}
           size="sm"
           onClick={() => setShowFeatured(!showFeatured)}
-          className={showFeatured ? "bg-[#fdc501] hover:bg-[#e3b001] text-black" : ""}
+          className={showFeatured ? "bg-[#fdc501] hover:bg-[#e3b001] text-black h-9" : "h-9"}
         >
           Featured Only
         </Button>
@@ -219,7 +219,7 @@ export default function TestimonialsPage() {
                   </div>
 
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
-                    "{testimonial.content}"
+                    &ldquo;{testimonial.content}&rdquo;
                   </p>
 
                   {testimonial.bikeModel && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { 
   Plus, 
   Search, 
@@ -20,7 +21,8 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  Copy
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -29,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { BulkActionsToolbar, defaultProductActions } from '@/components/admin/BulkActionsToolbar'
 
 interface Product {
   id: string
@@ -57,11 +60,13 @@ interface ProductsResponse {
 
 export default function ProductsPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [featuredFilter, setFeaturedFilter] = useState('all')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -133,6 +138,64 @@ export default function ProductsPage() {
     } catch (error) {
       console.error('Delete error:', error)
       alert('Failed to delete product')
+    }
+  }
+
+  const handleDuplicate = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/products/${id}/duplicate`, {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        router.push(data.redirectUrl)
+      } else {
+        console.error('Failed to duplicate product')
+      }
+    } catch (error) {
+      console.error('Failed to duplicate product:', error)
+    }
+  }
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    try {
+      const response = await fetch('/api/admin/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entityType: 'products',
+          action,
+          ids,
+        }),
+      })
+
+      if (response.ok) {
+        setSelectedIds(new Set())
+        fetchProducts()
+      } else {
+        console.error('Bulk action failed')
+      }
+    } catch (error) {
+      console.error('Bulk action failed:', error)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedIds(newSelected)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(products.map(p => p.id)))
     }
   }
 
@@ -259,6 +322,18 @@ export default function ProductsPage() {
 
       {/* Products Grid */}
       <Card className="overflow-hidden">
+        {/* Bulk Actions Toolbar */}
+        {products.length > 0 && (
+          <BulkActionsToolbar
+            selectedIds={selectedIds}
+            items={products}
+            onSelectAll={toggleSelectAll}
+            onClearSelection={() => setSelectedIds(new Set())}
+            actions={defaultProductActions}
+            onAction={handleBulkAction}
+          />
+        )}
+        
         {products.length === 0 ? (
           <CardContent className="p-12">
             <div className="text-center">
@@ -288,9 +363,18 @@ export default function ProductsPage() {
               return (
                 <div 
                   key={product.id} 
-                  className="p-4 hover:bg-gray-50/50 transition-colors group"
+                  className={`p-4 hover:bg-gray-50/50 transition-colors group ${selectedIds.has(product.id) ? 'bg-emerald-50/50' : ''}`}
                 >
                   <div className="flex items-start gap-4">
+                    {/* Checkbox */}
+                    <div className="flex-shrink-0 pt-3">
+                      <Checkbox
+                        checked={selectedIds.has(product.id)}
+                        onCheckedChange={() => toggleSelect(product.id)}
+                        className="data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
+                      />
+                    </div>
+                    
                     {/* Product Image */}
                     <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gray-100 overflow-hidden">
                       {product.featuredImage ? (
@@ -381,6 +465,13 @@ export default function ProductsPage() {
                               <ExternalLink className="h-4 w-4 mr-2" />
                               View Live
                             </a>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDuplicate(product.id)}
+                            className="cursor-pointer"
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

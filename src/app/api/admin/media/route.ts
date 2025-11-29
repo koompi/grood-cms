@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { withPermission } from "@/lib/permissions";
+import { optimizeImage, isOptimizableImage } from "@/lib/image-optimizer";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const THUMBNAIL_DIR = path.join(
@@ -206,19 +207,38 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Generate unique filename
-        const filename = generateFilename(file.name);
-        const filepath = path.join(UPLOAD_DIR, filename);
-        const url = `/uploads/${filename}`;
+        let filename: string;
+        let url: string;
+        let width: number | null = null;
+        let height: number | null = null;
+        let size: number = file.size;
+        let thumbnailUrl: string | null = null;
+        let blurDataUrl: string | null = null;
 
-        // Write file to disk
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        await writeFile(filepath, buffer);
+        // Check if this is an optimizable image
+        if (isOptimizableImage(file.type)) {
+          // Use image optimizer for images
+          const optimized = await optimizeImage(file, {
+            generateThumbnail: true,
+            generateBlur: true,
+          });
+          filename = optimized.filename;
+          url = optimized.url;
+          width = optimized.width;
+          height = optimized.height;
+          size = optimized.size;
+          thumbnailUrl = optimized.thumbnailUrl || null;
+          blurDataUrl = optimized.blurDataUrl || null;
+        } else {
+          // For non-image files, just save directly
+          filename = generateFilename(file.name);
+          const filepath = path.join(UPLOAD_DIR, filename);
+          url = `/uploads/${filename}`;
 
-        // Get image dimensions (placeholder - would use sharp in production)
-        const width: number | null = null;
-        const height: number | null = null;
+          const bytes = await file.arrayBuffer();
+          const buffer = Buffer.from(bytes);
+          await writeFile(filepath, buffer);
+        }
 
         // Create media record in database
         const media = await prisma.media.create({
@@ -228,10 +248,12 @@ export async function POST(request: NextRequest) {
             alt,
             caption,
             mimeType: file.type,
-            size: file.size,
+            size,
             width,
             height,
             url,
+            thumbnailUrl,
+            blurDataUrl,
             folderId: folderId || null,
             uploadedById: user?.id,
             organizationId,

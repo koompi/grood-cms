@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { withPermission } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     const where: any = {
       organizationId,
+      deletedAt: null, // Only show non-deleted products
     };
 
     if (status) where.status = status;
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
   try {
     const authResult = await withPermission("products", "create");
     if (authResult instanceof NextResponse) return authResult;
-    const { organizationId } = authResult;
+    const { user, organizationId } = authResult;
 
     const body = await request.json();
     const {
@@ -155,6 +157,16 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    // Log activity
+    await logActivity({
+      action: "create",
+      entityType: "product",
+      entityId: product.id,
+      entityTitle: product.name,
+      userId: user.id,
+      organizationId,
     });
 
     return NextResponse.json(product);

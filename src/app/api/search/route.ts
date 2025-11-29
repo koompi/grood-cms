@@ -8,9 +8,9 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "10");
 
   if (!query || query.length < 2) {
-    return NextResponse.json({ 
+    return NextResponse.json({
       results: [],
-      message: "Query must be at least 2 characters" 
+      message: "Query must be at least 2 characters",
     });
   }
 
@@ -206,9 +206,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Search error:", error);
-    return NextResponse.json(
-      { error: "Search failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 }

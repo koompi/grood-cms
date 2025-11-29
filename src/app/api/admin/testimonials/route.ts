@@ -46,15 +46,7 @@ export async function POST(request: NextRequest) {
     const { organizationId } = authResult;
 
     const body = await request.json();
-    const {
-      quote,
-      source,
-      author,
-      rating,
-      type,
-      featured,
-      order,
-    } = body;
+    const { quote, source, author, rating, type, featured, order } = body;
 
     const testimonial = await prisma.groodTestimonial.create({
       data: {

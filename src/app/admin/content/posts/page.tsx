@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { 
   Plus, 
   Edit, 
@@ -18,7 +19,10 @@ import {
   Calendar,
   User,
   MoreVertical,
-  ExternalLink
+  ExternalLink,
+  Copy,
+  EyeOff,
+  Archive
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -27,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { BulkActionsToolbar, defaultPostActions } from '@/components/admin/BulkActionsToolbar'
 
 interface Post {
   id: string
@@ -49,11 +54,13 @@ interface Post {
 
 export default function PostsPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (status === 'loading') return
@@ -108,6 +115,64 @@ export default function PostsPage() {
       }
     } catch (error) {
       console.error('Failed to delete post:', error)
+    }
+  }
+
+  const handleDuplicate = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/admin/posts/${postId}/duplicate`, {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        router.push(data.redirectUrl)
+      } else {
+        console.error('Failed to duplicate post')
+      }
+    } catch (error) {
+      console.error('Failed to duplicate post:', error)
+    }
+  }
+
+  const handleBulkAction = async (action: string, ids: string[]) => {
+    try {
+      const response = await fetch('/api/admin/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entityType: 'posts',
+          action,
+          ids,
+        }),
+      })
+
+      if (response.ok) {
+        setSelectedIds(new Set())
+        fetchPosts()
+      } else {
+        console.error('Bulk action failed')
+      }
+    } catch (error) {
+      console.error('Bulk action failed:', error)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedIds(newSelected)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredPosts.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredPosts.map(p => p.id)))
     }
   }
 
@@ -211,6 +276,18 @@ export default function PostsPage() {
 
       {/* Posts List */}
       <Card className="overflow-hidden">
+        {/* Bulk Actions Toolbar */}
+        {filteredPosts.length > 0 && (
+          <BulkActionsToolbar
+            selectedIds={selectedIds}
+            items={filteredPosts}
+            onSelectAll={toggleSelectAll}
+            onClearSelection={() => setSelectedIds(new Set())}
+            actions={defaultPostActions}
+            onAction={handleBulkAction}
+          />
+        )}
+        
         {filteredPosts.length === 0 ? (
           <CardContent className="p-12">
             <div className="text-center">
@@ -238,9 +315,18 @@ export default function PostsPage() {
             {filteredPosts.map((post) => (
               <div 
                 key={post.id} 
-                className="p-4 hover:bg-gray-50/50 transition-colors group"
+                className={`p-4 hover:bg-gray-50/50 transition-colors group ${selectedIds.has(post.id) ? 'bg-blue-50/50' : ''}`}
               >
                 <div className="flex items-start gap-4">
+                  {/* Checkbox */}
+                  <div className="flex-shrink-0 pt-1">
+                    <Checkbox
+                      checked={selectedIds.has(post.id)}
+                      onCheckedChange={() => toggleSelect(post.id)}
+                      className="data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
+                    />
+                  </div>
+                  
                   {/* Icon */}
                   <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                     <FileText className="h-5 w-5 text-white" />
@@ -325,6 +411,13 @@ export default function PostsPage() {
                             </a>
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem
+                          onClick={() => handleDuplicate(post.id)}
+                          className="cursor-pointer"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Duplicate
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleDelete(post.id)}

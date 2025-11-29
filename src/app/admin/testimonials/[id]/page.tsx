@@ -46,7 +46,7 @@ export default function TestimonialEditPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const isNew = id === "new";
   
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [form, setForm] = useState<TestimonialForm>(defaultForm);
   const [loading, setLoading] = useState(!isNew);

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ShoppingBag, Star, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { generateSEO } from "@/lib/seo";
+import { SetPageContext } from "@/components/admin";
 
 export const metadata = generateSEO({
   title: "Accessories",
@@ -40,6 +41,7 @@ export default async function AccessoriesPage() {
   const accessories = await getAccessories();
   return (
     <main>
+      <SetPageContext pageType="accessory" />
       {/* Hero */}
       <section className="bg-black pt-28 pb-16 md:pt-32 md:pb-24" data-header-theme="dark">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 text-center">

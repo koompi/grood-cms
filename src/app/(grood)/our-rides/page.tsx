@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { generateSEO } from "@/lib/seo";
+import { SetPageContext } from "@/components/admin";
 
 export const metadata = generateSEO({
   title: "Our Rides",
@@ -36,6 +37,7 @@ export default async function OurRidesPage() {
   const bikeModels = await getEBikes();
   return (
     <main>
+      <SetPageContext pageType="ebike" />
       {/* Hero */}
       <section data-header-theme="dark" className="bg-black pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 text-center">

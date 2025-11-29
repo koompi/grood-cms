@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Metadata } from "next";
 import { generateProductJsonLd, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { SetPageContext } from "@/components/admin";
 
 interface EBikeSpecs {
   range?: string;
@@ -123,6 +124,7 @@ export default async function BikePage({ params }: PageProps) {
 
   return (
     <main>
+      <SetPageContext pageType="ebike" pageId={bike.id} pageSlug={bike.slug} />
       <JsonLd data={productJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       {/* Hero Section */}
@@ -337,7 +339,7 @@ export default async function BikePage({ params }: PageProps) {
                   </div>
                   )}
                   <p className="text-2xl font-bold text-black mb-4">
-                    "{review.quote}"
+                    &ldquo;{review.quote}&rdquo;
                   </p>
                   <p className="text-gray-500">{review.source}{review.author ? ` - ${review.author}` : ""}</p>
                 </div>
